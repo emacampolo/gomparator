@@ -9,7 +9,7 @@ import (
 
 type Response struct {
 	URL        *url.URL
-	JSON       interface{}
+	JSON       map[string]interface{}
 	StatusCode int
 }
 
@@ -54,8 +54,8 @@ func (fetcher) Fetch(host string, relPath string, headers map[string]string) (*R
 	}, nil
 }
 
-func toJson(b []byte) interface{} {
-	var j interface{}
+func toJson(b []byte) map[string]interface{} {
+	var j map[string]interface{}
 	err := json.Unmarshal(b, &j)
 	if err != nil {
 		return nil

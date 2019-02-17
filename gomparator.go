@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
@@ -69,24 +70,19 @@ func Action(c *cli.Context) {
 		rl.Take()
 		relUrl := scanner.Text()
 
-		var responses []*fetcher.Response
-		for _, host := range hosts {
-			response, err := f.Fetch(host, relUrl, headers)
-			if err != nil {
-				log.Println(fmt.Sprintf("line: %d, host: %s, path: %s", lineNumber, host, relUrl), err)
-				break
-			}
-			responses = append(responses, response)
-		}
-
-		if len(responses) != 2 {
+		first, err := f.Fetch(hosts[0], relUrl, headers)
+		if err != nil {
+			log.Println(fmt.Sprintf("line: %d, host: %s, path: %s", lineNumber, hosts[0], relUrl), err)
 			continue
 		}
 
-		first := responses[0]
-		second := responses[1]
+		second, err := f.Fetch(hosts[1], relUrl, headers)
+		if err != nil {
+			log.Println(fmt.Sprintf("line: %d, host: %s, path: %s", lineNumber, hosts[1], relUrl), err)
+			continue
+		}
 
-		if first.IsOk() && second.IsOk() && cmp.Equal(first.JSON, second.JSON) {
+		if first.IsOk() && second.IsOk() && reflect.DeepEqual(first.JSON, second.JSON) {
 			log.Println(fmt.Sprintf("line %d ok status code %d", lineNumber, 200))
 		} else if first.IsOk() && second.IsOk() {
 			log.Println(fmt.Sprintf("line %d nok json diff url %s", lineNumber, relUrl), cmp.Diff(first.JSON, second.JSON))
