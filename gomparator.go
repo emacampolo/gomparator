@@ -19,15 +19,16 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
+	app.HideVersion = true
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "path",
-			Usage: "the named file for reading URLs",
+			Usage: "the named file for reading URL. It should contain one column only with a rel path. eg: /v1/cards?query=123",
 		},
 		cli.StringSliceFlag{
 			Name:  "host",
-			Usage: "exactly 2 hosts must be specified",
+			Usage: "exactly 2 hosts must be specified. eg: --host 'http://hostA --host 'http://hostB'",
 		},
 		cli.StringFlag{
 			Name:  "headers",
@@ -35,8 +36,13 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:  "ratelimit, r",
-			Value: 25,
+			Value: 5,
 			Usage: "operation rate limit per second",
+		},
+		cli.IntFlag{
+			Name:  "workers, w",
+			Value: 1,
+			Usage: "number of workers running concurrently",
 		},
 	}
 
@@ -76,7 +82,7 @@ func Action(c *cli.Context) {
 
 	wg := new(sync.WaitGroup)
 
-	for w := 0; w < 6; w++ {
+	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
 		go doWork(f, hosts, headers, jobs, wg, limiter)
 	}
