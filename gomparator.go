@@ -10,8 +10,8 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli"
 )
 
@@ -60,40 +60,57 @@ func Action(c *cli.Context) {
 		log.Fatal("invalid number of hosts provided")
 	}
 
-	scanner := bufio.NewScanner(file)
-	rl := ratelimit.New(c.Int("ratelimit"))
-	lineNumber := 1
+	limiter := ratelimit.New(c.Int("ratelimit"))
 	f := fetcher.New()
 	headers := parseHeaders(c)
 
-	for scanner.Scan() {
-		rl.Take()
-		relUrl := scanner.Text()
+	jobs := make(chan string)
 
-		first, err := f.Fetch(hosts[0], relUrl, headers)
+	go func() {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			jobs <- scanner.Text()
+		}
+		close(jobs)
+	}()
+
+	wg := new(sync.WaitGroup)
+
+	for w := 0; w < 6; w++ {
+		wg.Add(1)
+		go doWork(f, hosts, headers, jobs, wg, limiter)
+	}
+
+	wg.Wait()
+}
+
+func doWork(fetcher fetcher.Fetcher, hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup, limiter ratelimit.Limiter) {
+	defer wg.Done()
+
+	limiter.Take()
+	for relUrl := range jobs {
+		first, err := fetcher.Fetch(hosts[0], relUrl, headers)
 		if err != nil {
-			log.Println(fmt.Sprintf("line: %d, host: %s, path: %s", lineNumber, hosts[0], relUrl), err)
+			log.Println(fmt.Sprintf("host: %s, path: %s", hosts[0], relUrl), err)
 			continue
 		}
 
-		second, err := f.Fetch(hosts[1], relUrl, headers)
+		second, err := fetcher.Fetch(hosts[1], relUrl, headers)
 		if err != nil {
-			log.Println(fmt.Sprintf("line: %d, host: %s, path: %s", lineNumber, hosts[1], relUrl), err)
+			log.Println(fmt.Sprintf("host: %s, path: %s", hosts[1], relUrl), err)
 			continue
 		}
 
 		if first.IsOk() && second.IsOk() && reflect.DeepEqual(first.JSON, second.JSON) {
-			log.Println(fmt.Sprintf("line %d ok status code %d", lineNumber, 200))
+			log.Println(fmt.Sprintf("ok status code %d", 200))
 		} else if first.IsOk() && second.IsOk() {
-			log.Println(fmt.Sprintf("line %d nok json diff url %s", lineNumber, relUrl), cmp.Diff(first.JSON, second.JSON))
+			log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
 		} else if first.StatusCode == second.StatusCode {
-			log.Println(fmt.Sprintf("line %d ok status code %d url %s", lineNumber, first.StatusCode, relUrl))
+			log.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))
 		} else {
-			log.Println(fmt.Sprintf("line %d nok status code url %s, %s: %d - %s: %d",
-				lineNumber, relUrl, first.URL.Host, first.StatusCode, second.URL.Host, second.StatusCode))
+			log.Println(fmt.Sprintf("nok status code url %s, %s: %d - %s: %d",
+				relUrl, first.URL.Host, first.StatusCode, second.URL.Host, second.StatusCode))
 		}
-
-		lineNumber++
 	}
 }
 
