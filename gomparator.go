@@ -1,15 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"github.com/emacampolo/gomparator/internal"
 	"github.com/emacampolo/gomparator/internal/fetcher"
 	"go.uber.org/ratelimit"
-	"io"
 	"log"
 	"os"
 	"reflect"
-	"strings"
 	"sync"
 
 	"github.com/urfave/cli"
@@ -59,7 +57,7 @@ func Action(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer cl(file)
+	defer internal.Close(file)
 
 	hosts := c.StringSlice("host")
 	if len(hosts) != 2 {
@@ -67,18 +65,12 @@ func Action(c *cli.Context) {
 	}
 
 	limiter := ratelimit.New(c.Int("ratelimit"))
+
 	f := fetcher.New()
-	headers := parseHeaders(c)
+	headers := internal.ParseHeaders(c)
 
-	jobs := make(chan string)
-
-	go func() {
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			jobs <- scanner.Text()
-		}
-		close(jobs)
-	}()
+	lines := internal.ReadFile(file)
+	jobs := internal.DecodeLines(lines, headers)
 
 	wg := new(sync.WaitGroup)
 
@@ -117,34 +109,5 @@ func doWork(fetcher fetcher.Fetcher, hosts []string, headers map[string]string, 
 			log.Println(fmt.Sprintf("nok status code url %s, %s: %d - %s: %d",
 				relUrl, first.URL.Host, first.StatusCode, second.URL.Host, second.StatusCode))
 		}
-	}
-}
-
-func parseHeaders(c *cli.Context) map[string]string {
-	var result map[string]string
-
-	headers := strings.Split(c.String("headers"), ",")
-	result = make(map[string]string, len(headers))
-
-	for _, header := range headers {
-		if header == "" {
-			continue
-		}
-
-		h := strings.Split(header, ":")
-		if len(h) != 2 {
-			log.Fatal("invalid header")
-		}
-
-		result[h[0]] = h[1]
-	}
-
-	return result
-}
-
-func cl(c io.Closer) {
-	err := c.Close()
-	if err != nil {
-		log.Fatal(err)
 	}
 }
