@@ -1,16 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"github.com/emacampolo/gomparator/internal"
 	"github.com/emacampolo/gomparator/internal/fetcher"
+	"github.com/emacampolo/gomparator/internal/json"
+	"github.com/emacampolo/gomparator/internal/utils"
+	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
+
+	"fmt"
 	"log"
 	"os"
-	"reflect"
 	"sync"
-
-	"github.com/urfave/cli"
 )
 
 func main() {
@@ -57,7 +57,7 @@ func Action(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer internal.Close(file)
+	defer utils.Close(file)
 
 	hosts := c.StringSlice("host")
 	if len(hosts) != 2 {
@@ -65,18 +65,14 @@ func Action(c *cli.Context) {
 	}
 
 	limiter := ratelimit.New(c.Int("ratelimit"))
-
 	f := fetcher.New()
-	headers := internal.ParseHeaders(c)
-
-	lines := internal.ReadFile(file)
-	jobs := internal.DecodeLines(lines, headers)
-
+	headers := utils.ParseHeaders(c)
+	lines := utils.ReadFile(file)
 	wg := new(sync.WaitGroup)
 
 	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
-		go doWork(f, hosts, headers, jobs, wg, limiter)
+		go doWork(f, hosts, headers, lines, wg, limiter)
 	}
 
 	wg.Wait()
@@ -99,10 +95,16 @@ func doWork(fetcher fetcher.Fetcher, hosts []string, headers map[string]string, 
 			continue
 		}
 
-		if first.IsOk() && second.IsOk() && reflect.DeepEqual(first.JSON, second.JSON) {
-			log.Println(fmt.Sprintf("ok status code %d", 200))
-		} else if first.IsOk() && second.IsOk() {
-			log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
+		if first.IsOk() && second.IsOk() {
+			equal, err := json.Equal(first.JSON, second.JSON)
+			if err != nil {
+				log.Println(fmt.Sprintf("nok error parsing json response url %s", relUrl))
+			}
+			if equal {
+				log.Println(fmt.Sprintf("ok status code %d", 200))
+			} else {
+				log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
+			}
 		} else if first.StatusCode == second.StatusCode {
 			log.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))
 		} else {

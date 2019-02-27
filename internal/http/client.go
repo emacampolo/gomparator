@@ -1,9 +1,8 @@
 package http
 
 import (
-	"io"
+	"github.com/emacampolo/gomparator/internal/utils"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -28,7 +27,7 @@ func (c *httpClient) get(url string, headers map[string]string) (*Response, erro
 	if err != nil {
 		return nil, err
 	}
-	defer cl(resp.Body)
+	defer utils.Close(resp.Body)
 
 	p, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -41,11 +40,4 @@ var client = &httpClient{&http.Client{}}
 
 func Get(url string, headers map[string]string) (*Response, error) {
 	return client.get(url, headers)
-}
-
-func cl(c io.Closer) {
-	err := c.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
 }
