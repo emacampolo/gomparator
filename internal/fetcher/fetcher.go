@@ -1,7 +1,6 @@
 package fetcher
 
 import (
-	"encoding/json"
 	"github.com/emacampolo/gomparator/internal/http"
 	"log"
 	"net/url"
@@ -9,7 +8,7 @@ import (
 
 type Response struct {
 	URL        *url.URL
-	JSON       map[string]interface{}
+	JSON       []byte
 	StatusCode int
 }
 
@@ -50,15 +49,6 @@ func (fetcher) Fetch(host string, relPath string, headers map[string]string) (*R
 	return &Response{
 		URL:        u,
 		StatusCode: response.StatusCode,
-		JSON:       toJson(response.Body),
+		JSON:       response.Body,
 	}, nil
-}
-
-func toJson(b []byte) map[string]interface{} {
-	var j map[string]interface{}
-	err := json.Unmarshal(b, &j)
-	if err != nil {
-		return nil
-	}
-	return j
 }
