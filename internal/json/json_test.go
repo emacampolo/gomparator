@@ -131,8 +131,11 @@ func TestEqual(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			equal, _ := Equal(test.b1, test.b2)
-			assert.Equal(t, test.isEqual, equal)
+			j1, j2, err := Unmarshal(test.b1, test.b2)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assert.Equal(t, test.isEqual, Equal(j1, j2))
 		})
 
 	}

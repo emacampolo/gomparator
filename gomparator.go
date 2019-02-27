@@ -4,6 +4,7 @@ import (
 	"github.com/emacampolo/gomparator/internal/fetcher"
 	"github.com/emacampolo/gomparator/internal/json"
 	"github.com/emacampolo/gomparator/internal/utils"
+	"github.com/google/go-cmp/cmp"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
 
@@ -96,14 +97,15 @@ func doWork(fetcher fetcher.Fetcher, hosts []string, headers map[string]string, 
 		}
 
 		if first.IsOk() && second.IsOk() {
-			equal, err := json.Equal(first.JSON, second.JSON)
+			j1, j2, err := json.Unmarshal(first.JSON, second.JSON)
 			if err != nil {
-				log.Println(fmt.Sprintf("nok error parsing json response url %s", relUrl))
+				log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
 			}
+			equal := json.Equal(j1, j2)
 			if equal {
-				log.Println(fmt.Sprintf("ok status code %d", 200))
+				log.Println("ok")
 			} else {
-				log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
+				log.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
 			}
 		} else if first.StatusCode == second.StatusCode {
 			log.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))

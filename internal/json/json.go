@@ -5,24 +5,7 @@ import (
 	"reflect"
 )
 
-func Equal(b1 []byte, b2 [] byte) (bool, error) {
-	var j1 interface{}
-	var j2 interface{}
-
-	err := json.Unmarshal(b1, &j1)
-	if err != nil {
-		return false, nil
-	}
-
-	err = json.Unmarshal(b2, &j2)
-	if err != nil {
-		return false, nil
-	}
-
-	return deepValueEqual(j1, j2), nil
-}
-
-func deepValueEqual(v1, v2 interface{}) bool {
+func Equal(v1, v2 interface{}) bool {
 	if reflect.ValueOf(v1).Type() != reflect.ValueOf(v2).Type() {
 		return false
 	}
@@ -43,7 +26,7 @@ func deepValueEqual(v1, v2 interface{}) bool {
 				return false
 			}
 
-			if !deepValueEqual(v, val2) {
+			if !Equal(v, val2) {
 				return false
 			}
 		}
@@ -59,7 +42,7 @@ func deepValueEqual(v1, v2 interface{}) bool {
 		for _, v := range vv1 {
 			found = false
 			for i, v2 := range vv2 {
-				if deepValueEqual(v, v2) && !flagged[i] {
+				if Equal(v, v2) && !flagged[i] {
 					matches++
 					flagged[i] = true
 					found = true
@@ -74,4 +57,21 @@ func deepValueEqual(v1, v2 interface{}) bool {
 	default:
 		return v1 == v2
 	}
+}
+
+func Unmarshal(b1 []byte, b2 [] byte) (interface{}, interface{}, error) {
+	var j1 interface{}
+	var j2 interface{}
+
+	err := json.Unmarshal(b1, &j1)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = json.Unmarshal(b2, &j2)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return j1, j2, nil
 }
