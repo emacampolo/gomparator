@@ -91,12 +91,12 @@ func TestEqual(t *testing.T) {
 			b1:      []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}, {"FirstName":"Martin", "LastName": "Fowler", "Age" : 30, "Friends" : []}]`),
 			b2:      []byte(`[{"FirstName":"Martin", "LastName": "Fowler", "Age" : 30, "Friends" : []}, {"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
 		},
-		/*		{
-					name: "some complex example",
-					isEqual: true,
-					b1: []byte(`[{"a": 1, "b": [{"c": [1,5,2,4]}, {"d": [1]}]}]`),
-					b2: []byte(`[{"b": [{"d": [1]}, {"c": [1,2,4,5]}], "a": 1}]`),
-				},*/
+		{
+			name:    "some complex example",
+			isEqual: true,
+			b1:      []byte(`[{"a": 1, "b": [{"c": [1,5,2,4]}, {"d": [1]}]}]`),
+			b2:      []byte(`[{"b": [{"d": [1]}, {"c": [1,2,4,5]}], "a": 1}]`),
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

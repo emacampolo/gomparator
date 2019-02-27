@@ -36,9 +36,17 @@ func deepValueEqual(v1, v2 interface{}) bool {
 		if len(vv1) != len(vv2) {
 			return false
 		}
-
 		for k, v := range vv1 {
 			val2 := vv2[k]
+
+			if v == nil && val2 == nil {
+				return true
+			}
+
+			if (v != nil && val2 == nil) || (v == nil && val2 != nil) {
+				return false
+			}
+
 			if !deepValueEqual(v, val2) {
 				return false
 			}
