@@ -19,17 +19,13 @@ func Equal(b1 []byte, b2 [] byte) (bool, error) {
 		return false, nil
 	}
 
-	v1 := reflect.ValueOf(j1)
-	v2 := reflect.ValueOf(j2)
-
-	if v1.Type() != v2.Type() {
-		return false, nil
-	}
-
 	return deepValueEqual(j1, j2), nil
 }
 
 func deepValueEqual(v1, v2 interface{}) bool {
+	if reflect.ValueOf(v1).Type() != reflect.ValueOf(v2).Type() {
+		return false
+	}
 	switch vv1 := v1.(type) {
 	case map[string]interface{}:
 		vv2 := v2.(map[string]interface{})
@@ -53,16 +49,25 @@ func deepValueEqual(v1, v2 interface{}) bool {
 		}
 		return true
 	case []interface{}:
-		var matches int
 		vv2 := v2.([]interface{})
 		if len(vv1) != len(vv2) {
 			return false
 		}
+		var matches int
+		flagged := make([]bool, len(vv2))
+		var found bool
 		for _, v := range vv1 {
-			for _, v2 := range vv2 {
-				if deepValueEqual(v, v2) {
+			found = false
+			for i, v2 := range vv2 {
+				if deepValueEqual(v, v2) && !flagged[i] {
 					matches++
+					flagged[i] = true
+					found = true
+					break
 				}
+			}
+			if !found {
+				return false
 			}
 		}
 		return matches == len(vv1)
