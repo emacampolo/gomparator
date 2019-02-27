@@ -1,17 +1,16 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/emacampolo/gomparator/internal/fetcher"
 	"github.com/emacampolo/gomparator/internal/json"
 	"github.com/emacampolo/gomparator/internal/utils"
+	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
+
+	"fmt"
 	"log"
 	"os"
 	"sync"
-
-	"github.com/urfave/cli"
 )
 
 func main() {
@@ -68,22 +67,12 @@ func Action(c *cli.Context) {
 	limiter := ratelimit.New(c.Int("ratelimit"))
 	f := fetcher.New()
 	headers := utils.ParseHeaders(c)
-
-	jobs := make(chan string)
-
-	go func() {
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			jobs <- scanner.Text()
-		}
-		close(jobs)
-	}()
-
+	lines := utils.ReadFile(file)
 	wg := new(sync.WaitGroup)
 
 	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
-		go doWork(f, hosts, headers, jobs, wg, limiter)
+		go doWork(f, hosts, headers, lines, wg, limiter)
 	}
 
 	wg.Wait()

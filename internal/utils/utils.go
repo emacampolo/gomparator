@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"bufio"
 	"github.com/urfave/cli"
 	"io"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -34,4 +36,17 @@ func Close(c io.Closer) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func ReadFile(file *os.File) <-chan string {
+	out := make(chan string)
+	scanner := bufio.NewScanner(file)
+	go func() {
+		for scanner.Scan() {
+			out <- scanner.Text()
+		}
+		close(out)
+	}()
+
+	return out
 }

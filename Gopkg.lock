@@ -19,16 +19,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:879187d4cd93f058be023a4a65b89fa00fd9edca309d194c9281653f6466db3c"
+  digest = "1:70394504a9a20fcd569c63df270c4fce906bac2653bc8f99029e040caeb4cc1e"
   name = "github.com/robertkrimen/otto"
   packages = [
-    ".",
-    "ast",
-    "dbg",
-    "file",
-    "parser",
     "registry",
-    "token",
     "underscore",
   ]
   pruneopts = "UT"
@@ -61,22 +55,10 @@
   pruneopts = "UT"
   revision = "c15da02342779cb6dc027fc95ee2277787698f36"
 
-[[projects]]
-  digest = "1:9935525a8c49b8434a0b0a54e1980e94a6fae73aaff45c5d33ba8dff69de123e"
-  name = "gopkg.in/sourcemap.v1"
-  packages = [
-    ".",
-    "base64vlq",
-  ]
-  pruneopts = "UT"
-  revision = "6e83acea0053641eff084973fee085f0c193c61a"
-  version = "v1.0.5"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/robertkrimen/otto",
     "github.com/robertkrimen/otto/underscore",
     "github.com/stretchr/testify/assert",
     "github.com/urfave/cli",

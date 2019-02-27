@@ -56,47 +56,47 @@ func TestEqual(t *testing.T) {
 			b2:      []byte(`{"z": 1, "x": {"s": 2, "t": 1}}`),
 		},
 		{
-			name: "equal array objects",
+			name:    "equal array objects",
 			isEqual: true,
-			b1:   []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
-			b2:   []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
+			b1:      []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
+			b2:      []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
 		},
 		{
-			name: "equal exact same objects",
+			name:    "equal exact same objects",
 			isEqual: true,
-			b1: []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
-			b2: []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b1:      []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b2:      []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
 		},
 		{
-			name: "equal flip one field at the root",
+			name:    "equal flip one field at the root",
 			isEqual: true,
-			b1: []byte(`{"LastName": "Turing", "FirstName":"Alan", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
-			b2: []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b1:      []byte(`{"LastName": "Turing", "FirstName":"Alan", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b2:      []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
 		},
 		{
-			name: "flip one field inside a node",
+			name:    "flip one field inside a node",
 			isEqual: true,
-			b1: []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Martin Fowler", "Rob Pike"], "Info" : [{"Country":  "US", "Number": 111}]}`),
-			b2: []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b1:      []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Martin Fowler", "Rob Pike"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b2:      []byte(`{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
 		},
 		{
-			name: "Flip one field inside inner node",
+			name:    "Flip one field inside inner node",
 			isEqual: true,
-			b1: []byte(`{"LastName": "Turing", "FirstName":"Alan", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
-			b2: []byte(`{"LastName": "Turing", "FirstName":"Alan", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Number": 111, "Country":  "US"}]}`),
+			b1:      []byte(`{"LastName": "Turing", "FirstName":"Alan", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Country":  "US", "Number": 111}]}`),
+			b2:      []byte(`{"LastName": "Turing", "FirstName":"Alan", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"], "Info" : [{"Number": 111, "Country":  "US"}]}`),
 		},
 		{
-			name: "flip object in root array",
+			name:    "flip object in root array",
 			isEqual: true,
-			b1: []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}, {"FirstName":"Martin", "LastName": "Fowler", "Age" : 30, "Friends" : []}]`),
-			b2: []byte(`[{"FirstName":"Martin", "LastName": "Fowler", "Age" : 30, "Friends" : []}, {"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
+			b1:      []byte(`[{"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}, {"FirstName":"Martin", "LastName": "Fowler", "Age" : 30, "Friends" : []}]`),
+			b2:      []byte(`[{"FirstName":"Martin", "LastName": "Fowler", "Age" : 30, "Friends" : []}, {"FirstName":"Alan", "LastName": "Turing", "Age" : 20, "Friends" : ["Rob Pike", "Martin Fowler"]}]`),
 		},
-/*		{
-			name: "some complex example",
-			isEqual: true,
-			b1: []byte(`[{"a": 1, "b": [{"c": [1,5,2,4]}, {"d": [1]}]}]`),
-			b2: []byte(`[{"b": [{"d": [1]}, {"c": [1,2,4,5]}], "a": 1}]`),
-		},*/
+		/*		{
+					name: "some complex example",
+					isEqual: true,
+					b1: []byte(`[{"a": 1, "b": [{"c": [1,5,2,4]}, {"d": [1]}]}]`),
+					b2: []byte(`[{"b": [{"d": [1]}, {"c": [1,2,4,5]}], "a": 1}]`),
+				},*/
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
