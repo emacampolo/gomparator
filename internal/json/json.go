@@ -1,11 +1,26 @@
 package json
 
 import (
+	"bytes"
 	"encoding/json"
 	"reflect"
 )
 
-func Equal(vx, vy interface{}) bool {
+func Equal(b1, b2 []byte) bool {
+	vx, vy, err := Unmarshal(b1, b2)
+	if err != nil {
+		return false
+	}
+
+	equals := bytes.Equal(b1, b2)
+	if equals {
+		return true
+	}
+
+	return deepEqual(vx, vy)
+}
+
+func deepEqual(vx, vy interface{}) bool {
 	if reflect.TypeOf(vx) != reflect.TypeOf(vy) {
 		return false
 	}
@@ -25,7 +40,7 @@ func Equal(vx, vy interface{}) bool {
 				return false
 			}
 
-			if !Equal(v, val2) {
+			if !deepEqual(v, val2) {
 				return false
 			}
 		}
@@ -42,7 +57,7 @@ func Equal(vx, vy interface{}) bool {
 		flagged := make([]bool, len(y))
 		for _, v := range x {
 			for i, v2 := range y {
-				if Equal(v, v2) && !flagged[i] {
+				if deepEqual(v, v2) && !flagged[i] {
 					matches++
 					flagged[i] = true
 					break

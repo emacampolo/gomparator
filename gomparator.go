@@ -43,6 +43,10 @@ func main() {
 			Value: 1,
 			Usage: "number of workers running concurrently",
 		},
+		cli.BoolFlag{
+			Name:  "show-diff",
+			Usage: "whether or not it shows differences when comparision fails",
+		},
 	}
 
 	app.Action = Action
@@ -73,13 +77,13 @@ func Action(c *cli.Context) {
 
 	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
-		go doWork(f, hosts, headers, lines, wg, limiter)
+		go doWork(c, f, hosts, headers, lines, wg, limiter)
 	}
 
 	wg.Wait()
 }
 
-func doWork(fetcher fetcher.Fetcher, hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup, limiter ratelimit.Limiter) {
+func doWork(c *cli.Context, fetcher fetcher.Fetcher, hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup, limiter ratelimit.Limiter) {
 	defer wg.Done()
 
 	limiter.Take()
@@ -97,15 +101,20 @@ func doWork(fetcher fetcher.Fetcher, hosts []string, headers map[string]string, 
 		}
 
 		if first.IsOk() && second.IsOk() {
-			j1, j2, err := json.Unmarshal(first.JSON, second.JSON)
-			if err != nil {
-				log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
-			}
-			equal := json.Equal(j1, j2)
+			equal := json.Equal(first.JSON, second.JSON)
 			if equal {
 				log.Println("ok")
 			} else {
-				log.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
+				j1, j2, err := json.Unmarshal(first.JSON, second.JSON)
+				if err != nil {
+					log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
+				}
+
+				if c.Bool("show-diff") {
+					log.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
+				} else {
+					log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
+				}
 			}
 		} else if first.StatusCode == second.StatusCode {
 			log.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))
