@@ -5,24 +5,23 @@ import (
 	"reflect"
 )
 
-func Equal(v1, v2 interface{}) bool {
-	if reflect.ValueOf(v1).Type() != reflect.ValueOf(v2).Type() {
+func Equal(vx, vy interface{}) bool {
+	if reflect.TypeOf(vx) != reflect.TypeOf(vy) {
 		return false
 	}
-	switch vv1 := v1.(type) {
+
+	switch x := vx.(type) {
 	case map[string]interface{}:
-		vv2 := v2.(map[string]interface{})
-		if len(vv1) != len(vv2) {
+		y := vy.(map[string]interface{})
+
+		if len(x) != len(y) {
 			return false
 		}
-		for k, v := range vv1 {
-			val2 := vv2[k]
 
-			if v == nil && val2 == nil {
-				return true
-			}
+		for k, v := range x {
+			val2 := y[k]
 
-			if (v != nil && val2 == nil) || (v == nil && val2 != nil) {
+			if (v == nil) != (val2 == nil) {
 				return false
 			}
 
@@ -30,32 +29,29 @@ func Equal(v1, v2 interface{}) bool {
 				return false
 			}
 		}
+
 		return true
 	case []interface{}:
-		vv2 := v2.([]interface{})
-		if len(vv1) != len(vv2) {
+		y := vy.([]interface{})
+
+		if len(x) != len(y) {
 			return false
 		}
+
 		var matches int
-		flagged := make([]bool, len(vv2))
-		var found bool
-		for _, v := range vv1 {
-			found = false
-			for i, v2 := range vv2 {
+		flagged := make([]bool, len(y))
+		for _, v := range x {
+			for i, v2 := range y {
 				if Equal(v, v2) && !flagged[i] {
 					matches++
 					flagged[i] = true
-					found = true
 					break
 				}
 			}
-			if !found {
-				return false
-			}
 		}
-		return matches == len(vv1)
+		return matches == len(x)
 	default:
-		return v1 == v2
+		return vx == vy
 	}
 }
 
