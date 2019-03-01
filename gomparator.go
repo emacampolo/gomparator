@@ -27,11 +27,11 @@ func main() {
 		},
 		cli.StringSliceFlag{
 			Name:  "host",
-			Usage: "exactly 2 hosts must be specified. eg: --host 'http://hostA --host 'http://hostB'",
+			Usage: "exactly 2 hosts must be specified. eg: --host 'http://host1.com --host 'http://host2.com'",
 		},
 		cli.StringFlag{
 			Name:  "headers",
-			Usage: "headers separated by commas. eg: \"X-Auth-token: 0x123, X-Public: false\"",
+			Usage: `headers separated by commas. eg: "X-Auth-Token: token, X-Public: false"`,
 		},
 		cli.IntFlag{
 			Name:  "ratelimit, r",
@@ -69,15 +69,15 @@ func Action(c *cli.Context) {
 		log.Fatal("invalid number of hosts provided")
 	}
 
-	limiter := ratelimit.New(c.Int("ratelimit"))
-	f := fetcher.New()
+	rateLimiter := ratelimit.New(c.Int("ratelimit"))
+	fetcher := fetcher.New()
 	headers := utils.ParseHeaders(c)
 	lines := utils.ReadFile(file)
 	wg := new(sync.WaitGroup)
 
 	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
-		go doWork(c, f, hosts, headers, lines, wg, limiter)
+		go doWork(c, fetcher, hosts, headers, lines, wg, rateLimiter)
 	}
 
 	wg.Wait()
