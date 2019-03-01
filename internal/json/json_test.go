@@ -1,7 +1,6 @@
 package json
 
 import (
-	_ "github.com/robertkrimen/otto/underscore"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
