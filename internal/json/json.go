@@ -70,7 +70,7 @@ func deepEqual(vx, vy interface{}) bool {
 	}
 }
 
-func Unmarshal(b1 []byte, b2 [] byte) (interface{}, interface{}, error) {
+func Unmarshal(b1 []byte, b2 []byte) (interface{}, interface{}, error) {
 	var j1 interface{}
 	var j2 interface{}
 

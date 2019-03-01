@@ -33,7 +33,7 @@ func (c *httpClient) get(url string, headers map[string]string) (*Response, erro
 	if err != nil {
 		return nil, err
 	}
-	return &Response{Body: p, StatusCode: resp.StatusCode,}, nil
+	return &Response{Body: p, StatusCode: resp.StatusCode}, nil
 }
 
 var client = &httpClient{&http.Client{}}
