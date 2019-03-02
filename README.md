@@ -1,6 +1,8 @@
 # gomparator 
 
-gomparator is used for comparing http JSON responses of two hosts by checking if they respond with the same json (deep equal ignoring order) and status code.
+gomparator is used for comparing HTTP JSON responses of two hosts by checking if they respond with the same json (deep equal ignoring order) and status code.
+
+Note: Only supports HTTP GET methods. More verbs are yet to come.
 
 ## Download and install
 
