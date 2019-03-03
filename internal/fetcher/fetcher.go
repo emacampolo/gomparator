@@ -1,32 +1,19 @@
 package fetcher
 
 import (
+	"github.com/emacampolo/gomparator/internal/comparator"
 	"github.com/emacampolo/gomparator/internal/http"
 	"log"
 	"net/url"
 )
 
-type Response struct {
-	URL        *url.URL
-	JSON       []byte
-	StatusCode int
-}
-
-func (r Response) IsOk() bool {
-	return r.StatusCode == 200
-}
-
-type Fetcher interface {
-	Fetch(host string, relPath string, headers map[string]string) (*Response, error)
-}
-
-func New() Fetcher {
+func New() fetcher {
 	return fetcher{}
 }
 
 type fetcher struct{}
 
-func (fetcher) Fetch(host string, relPath string, headers map[string]string) (*Response, error) {
+func (fetcher) Fetch(host string, relPath string, headers map[string]string) (*comparator.Response, error) {
 	u, err := url.Parse(relPath)
 	if err != nil {
 		log.Fatal(err)
@@ -46,7 +33,7 @@ func (fetcher) Fetch(host string, relPath string, headers map[string]string) (*R
 		return nil, err
 	}
 
-	return &Response{
+	return &comparator.Response{
 		URL:        u,
 		StatusCode: response.StatusCode,
 		JSON:       response.Body,
