@@ -36,7 +36,8 @@ func (r Response) IsOk() bool {
 	return r.StatusCode == 200
 }
 
-func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup, showDiff bool) {
+func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup,
+	showDiff bool, statusCodeOnly bool) {
 	defer wg.Done()
 
 	comp.Limiter.Take()
@@ -53,27 +54,32 @@ func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <
 			continue
 		}
 
-		if first.IsOk() && second.IsOk() {
-			equal := json.Equal(first.JSON, second.JSON)
-			if equal {
-				log.Println("ok")
+		if first.StatusCode == second.StatusCode {
+			if statusCodeOnly {
+				log.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))
 			} else {
-				j1, j2, err := json.Unmarshal(first.JSON, second.JSON)
-				if err != nil {
-					log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
-				}
-
-				if showDiff {
-					log.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
-				} else {
-					log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
-				}
+				compareResponses(first, second, relUrl, showDiff)
 			}
-		} else if first.StatusCode == second.StatusCode {
-			log.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))
 		} else {
 			log.Println(fmt.Sprintf("nok status code url %s, %s: %d - %s: %d",
 				relUrl, first.URL.Host, first.StatusCode, second.URL.Host, second.StatusCode))
+		}
+	}
+}
+
+func compareResponses(first *Response, second *Response, relUrl string, showDiff bool) {
+	equal := json.Equal(first.JSON, second.JSON)
+	if equal {
+		log.Println("ok")
+	} else {
+		if showDiff {
+			j1, j2, err := json.Unmarshal(first.JSON, second.JSON)
+			if err != nil {
+				log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
+			}
+			log.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
+		} else {
+			log.Println(fmt.Sprintf("nok json diff url %s", relUrl))
 		}
 	}
 }

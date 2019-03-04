@@ -45,6 +45,10 @@ func main() {
 			Name:  "show-diff",
 			Usage: "whether or not it shows differences when comparision fails",
 		},
+		cli.BoolFlag{
+			Name:  "status-code-only",
+			Usage: "whether or not it only compares status code ignoring response body",
+		},
 	}
 
 	app.Action = Action
@@ -74,7 +78,7 @@ func Action(c *cli.Context) {
 	wg := new(sync.WaitGroup)
 	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
-		go comp.Compare(hosts, headers, lines, wg, c.Bool("show-diff"))
+		go comp.Compare(hosts, headers, lines, wg, c.Bool("show-diff"), c.Bool("status-code-only"))
 	}
 
 	wg.Wait()
