@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/emacampolo/gomparator/internal/comparator"
-	"github.com/emacampolo/gomparator/internal/fetcher"
-	"github.com/emacampolo/gomparator/internal/utils"
+	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/platform/io"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
+	"strings"
 
 	"log"
 	"os"
@@ -64,16 +65,16 @@ func Action(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer utils.Close(file)
+	defer io.Close(file)
 
 	hosts := c.StringSlice("host")
 	if len(hosts) != 2 {
 		log.Fatal("invalid number of hosts provided")
 	}
 
-	headers := utils.ParseHeaders(c)
-	lines := utils.ReadFile(file)
-	comp := comparator.New(fetcher.New(), ratelimit.New(c.Int("ratelimit")))
+	headers := parseHeaders(c)
+	lines := io.ReadFile(file)
+	comp := comparator.New(http.New(), ratelimit.New(c.Int("ratelimit")))
 
 	wg := new(sync.WaitGroup)
 	for w := 0; w < c.Int("workers"); w++ {
@@ -82,4 +83,26 @@ func Action(c *cli.Context) {
 	}
 
 	wg.Wait()
+}
+
+func parseHeaders(c *cli.Context) map[string]string {
+	var result map[string]string
+
+	headers := strings.Split(c.String("headers"), ",")
+	result = make(map[string]string, len(headers))
+
+	for _, header := range headers {
+		if header == "" {
+			continue
+		}
+
+		h := strings.Split(header, ":")
+		if len(h) != 2 {
+			log.Fatal("invalid header")
+		}
+
+		result[h[0]] = h[1]
+	}
+
+	return result
 }

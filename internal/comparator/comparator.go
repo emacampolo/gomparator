@@ -2,16 +2,16 @@ package comparator
 
 import (
 	"fmt"
-	"github.com/emacampolo/gomparator/internal/json"
+	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/platform/json"
 	"github.com/google/go-cmp/cmp"
 	"go.uber.org/ratelimit"
 	"log"
-	"net/url"
 	"sync"
 )
 
 type Fetcher interface {
-	Fetch(host string, relPath string, headers map[string]string) (*Response, error)
+	Fetch(host string, relPath string, headers map[string]string) (*http.Response, error)
 }
 
 func New(fetcher Fetcher, rateLimiter ratelimit.Limiter) Comparator {
@@ -24,16 +24,6 @@ func New(fetcher Fetcher, rateLimiter ratelimit.Limiter) Comparator {
 type Comparator struct {
 	Fetcher
 	ratelimit.Limiter
-}
-
-type Response struct {
-	URL        *url.URL
-	JSON       []byte
-	StatusCode int
-}
-
-func (r Response) IsOk() bool {
-	return r.StatusCode == 200
 }
 
 func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup,
@@ -67,7 +57,7 @@ func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <
 	}
 }
 
-func compareResponses(first *Response, second *Response, relUrl string, showDiff bool) {
+func compareResponses(first *http.Response, second *http.Response, relUrl string, showDiff bool) {
 	equal := json.Equal(first.JSON, second.JSON)
 	if equal {
 		log.Println("ok")
