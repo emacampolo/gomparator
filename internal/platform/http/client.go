@@ -3,7 +3,6 @@ package http
 import (
 	"github.com/emacampolo/gomparator/internal/platform/io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -25,7 +24,7 @@ type Client struct{}
 func (c Client) Fetch(host string, relPath string, headers map[string]string) (*Response, error) {
 	url, err := url.Parse(relPath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	queryString := url.Query()
@@ -33,11 +32,14 @@ func (c Client) Fetch(host string, relPath string, headers map[string]string) (*
 
 	base, err := url.Parse(host)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	url = base.ResolveReference(url)
 	resp, err := c.get(url.String(), headers)
+	if err != nil {
+		return nil, err
+	}
 	defer io.Close(resp.Body)
 
 	json, err := ioutil.ReadAll(resp.Body)
