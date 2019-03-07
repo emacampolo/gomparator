@@ -58,15 +58,16 @@ func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <
 }
 
 func compareResponses(first *http.Response, second *http.Response, relUrl string, showDiff bool) {
-	equal := json.Equal(first.JSON, second.JSON)
+	equal, err := json.Equal(first.JSON, second.JSON)
+	if err != nil {
+		log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
+	}
+
 	if equal {
 		log.Println("ok")
 	} else {
 		if showDiff {
-			j1, j2, err := json.Unmarshal(first.JSON, second.JSON)
-			if err != nil {
-				log.Fatalf("error unmarshaling from %s with error %v", relUrl, err)
-			}
+			j1, j2, _ := json.Unmarshal(first.JSON, second.JSON)
 			log.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
 		} else {
 			log.Println(fmt.Sprintf("nok json diff url %s", relUrl))

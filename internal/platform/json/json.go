@@ -6,18 +6,18 @@ import (
 	"reflect"
 )
 
-func Equal(b1, b2 []byte) bool {
+func Equal(b1, b2 []byte) (bool, error) {
 	vx, vy, err := Unmarshal(b1, b2)
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	equals := bytes.Equal(b1, b2)
 	if equals {
-		return true
+		return true, nil
 	}
 
-	return deepEqual(vx, vy)
+	return deepEqual(vx, vy), nil
 }
 
 func deepEqual(vx, vy interface{}) bool {

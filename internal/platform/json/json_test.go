@@ -127,6 +127,12 @@ func TestEqual(t *testing.T) {
 			b2:      []byte(`{"paging":{"total":31,"limit":1,"offset":0},"results":[{"financial_institutions":[],"secure_thumbnail":"https://www.mercadopago.com/org-img/MP3/API/logos/visa.gif","payer_costs":[{"installment_reduced_tea":null,"installment_reduced_cft":null,"installments":1,"installment_rate":0,"id":124472954,"installment_full_cft":null,"discount_rate":0,"min_allowed_amount":15,"installment_full_tea":null,"labels":[],"max_allowed_amount":300000,"base_installment_rate":0,"installment_rate_collector":["MERCADOPAGO"]}],"issuer":{"default":true,"name":"Visa","id":1084},"total_financial_cost":null,"min_accreditation_days":0,"max_accreditation_days":2,"merchant_account_id":null,"id":"visa","payment_type_id":"credit_card","accreditation_time":2880,"owner":"site","settings":[{"security_code":{"mode":"mandatory","card_location":"back","length":3},"card_number":{"length":16,"validation":"standard"},"bin":{"pattern":"^4","installments_pattern":"^(403364|409078|410377|415723|421571|42275[456]|437846|44478[123]|44816[234]|449749|449750|449769|450626|450637|450642|450706|451319|45136[67]|454053|45406[56]|454090|45460[23]|454884|455104|455110|455134|455148|45517[56]|455189|458055|46791[01]|47281[123]|473103|473496|47715[789]|483087|485956|489417|49139[456]|491505|491510|491669|491670|49188[234]|49296[1234]|49352[56]|493726|49377[12]|493787|49400[78]|494016|494044|494078|494085|494095|494197|494199|496034|498479)","exclusion_pattern":"^(498535|498525|481521|469703|466240|463308|450624|441010|430308|430307|425677|421301|421300|414284|400773|400773|414284|418989|421300|421301|421827|425677|426511|430307|441010|450624|460067|463308|466240|466241|469703|481521|483114|498524|498525|498535|493526)"},"id":124472957}],"thumbnail":"http://img.mlstatic.com/org-img/MP3/API/logos/visa.gif","bins":[],"marketplace":"NONE","deferred_capture":"unsupported","labels":["recommended_method"],"financing_deals":{"legals":null,"installments":null,"expiration_date":null,"start_date":null,"status":"deactive"},"name":"Visa","site_id":"MLU","processing_mode":"aggregator","additional_info_needed":["cardholder_identification_number","cardholder_name","cardholder_identification_type"],"status":"active"}]}`),
 		},
 		{
+			name:    "empty payment methods",
+			isEqual: true,
+			b1:      []byte(`{"paging":{"total":0,"limit":30,"offset":0},"results":[]}`),
+			b2:      []byte(`{"paging":{"total":0,"limit":30,"offset":0},"results":[]}`),
+		},
+		{
 			name:    "slice with duplicates",
 			isEqual: false,
 			b1:      []byte(`{"nums":[1,3,3,5,5]}`),
@@ -172,7 +178,9 @@ func TestEqual(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.isEqual, Equal(test.b1, test.b2))
+			equal, err := Equal(test.b1, test.b2)
+			assert.Nil(t, err)
+			assert.Equal(t, test.isEqual, equal)
 		})
 
 	}
@@ -213,7 +221,9 @@ func BenchmarkEqual(b *testing.B) {
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				assert.Equal(b, test.isEqual, Equal(test.b1, test.b2))
+				equal, err := Equal(test.b1, test.b2)
+				assert.Nil(b, err)
+				assert.Equal(b, test.isEqual, equal)
 			}
 		})
 	}
