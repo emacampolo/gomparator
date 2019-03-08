@@ -1,7 +1,6 @@
 package comparator
 
 import (
-	"fmt"
 	"github.com/emacampolo/gomparator/internal/platform/http"
 	"github.com/emacampolo/gomparator/internal/platform/json"
 	"github.com/google/go-cmp/cmp"
@@ -46,7 +45,7 @@ func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <
 		}
 
 		if first.StatusCode == second.StatusCode && statusCodeOnly {
-			logger.Println(fmt.Sprintf("ok status code %d url %s", first.StatusCode, relUrl))
+			logger.Printf("ok status code %d url %s", first.StatusCode, relUrl)
 		} else if first.StatusCode == second.StatusCode {
 			if j1, j2 := unmarshal(first), unmarshal(second); j1 == nil || j2 == nil {
 				continue
@@ -54,13 +53,13 @@ func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <
 				logger.Println("ok")
 			} else {
 				if showDiff {
-					logger.Println(fmt.Sprintf("nok json diff url %s", relUrl), cmp.Diff(j1, j2))
+					logger.Printf("nok json diff url %s \n%s", relUrl, cmp.Diff(j1, j2))
 				} else {
-					logger.Println(fmt.Sprintf("nok json diff url %s", relUrl))
+					logger.Printf("nok json diff url %s", relUrl)
 				}
 			}
 		} else {
-			logger.Println(fmt.Sprintf("nok status code url %s, %s: %d - %s: %d", relUrl, first.URL.Host, first.StatusCode, second.URL.Host, second.StatusCode))
+			logger.Printf("nok status code url %s, %s: %d - %s: %d", relUrl, first.URL.Host, first.StatusCode, second.URL.Host, second.StatusCode)
 		}
 	}
 }
