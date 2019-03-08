@@ -31,17 +31,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:70394504a9a20fcd569c63df270c4fce906bac2653bc8f99029e040caeb4cc1e"
-  name = "github.com/robertkrimen/otto"
-  packages = [
-    "registry",
-    "underscore",
-  ]
-  pruneopts = "UT"
-  revision = "15f95af6e78dcd2030d8195a138bd88d4f403546"
-
-[[projects]]
   digest = "1:972c2427413d41a1e06ca4897e8528e5a1622894050e2f527b38ddf0f343f759"
   name = "github.com/stretchr/testify"
   packages = ["assert"]
@@ -73,7 +62,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/google/go-cmp/cmp",
-    "github.com/robertkrimen/otto/underscore",
     "github.com/stretchr/testify/assert",
     "github.com/urfave/cli",
     "go.uber.org/ratelimit",

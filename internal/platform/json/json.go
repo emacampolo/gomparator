@@ -1,26 +1,12 @@
 package json
 
 import (
-	"bytes"
 	"encoding/json"
 	"reflect"
 )
 
-func Equal(b1, b2 []byte) (bool, error) {
-	vx, vy, err := Unmarshal(b1, b2)
-	if err != nil {
-		return false, err
-	}
-
-	equals := bytes.Equal(b1, b2)
-	if equals {
-		return true, nil
-	}
-
-	return deepEqual(vx, vy), nil
-}
-
-func deepEqual(vx, vy interface{}) bool {
+// Equal checks equality between 2 JSON-encoded data.
+func Equal(vx, vy interface{}) bool {
 	if reflect.TypeOf(vx) != reflect.TypeOf(vy) {
 		return false
 	}
@@ -40,7 +26,7 @@ func deepEqual(vx, vy interface{}) bool {
 				return false
 			}
 
-			if !deepEqual(v, val2) {
+			if !Equal(v, val2) {
 				return false
 			}
 		}
@@ -57,7 +43,7 @@ func deepEqual(vx, vy interface{}) bool {
 		flagged := make([]bool, len(y))
 		for _, v := range x {
 			for i, v2 := range y {
-				if deepEqual(v, v2) && !flagged[i] {
+				if Equal(v, v2) && !flagged[i] {
 					matches++
 					flagged[i] = true
 					break
@@ -70,19 +56,14 @@ func deepEqual(vx, vy interface{}) bool {
 	}
 }
 
-func Unmarshal(b1 []byte, b2 []byte) (interface{}, interface{}, error) {
-	var j1 interface{}
-	var j2 interface{}
+// Unmarshal parses the JSON-encoded data into an interface{}
+func Unmarshal(b []byte) (interface{}, error) {
+	var j interface{}
 
-	err := json.Unmarshal(b1, &j1)
+	err := json.Unmarshal(b, &j)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	err = json.Unmarshal(b2, &j2)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return j1, j2, nil
+	return j, nil
 }

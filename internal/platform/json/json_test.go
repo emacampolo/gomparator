@@ -178,12 +178,19 @@ func TestEqual(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			equal, err := Equal(test.b1, test.b2)
-			assert.Nil(t, err)
-			assert.Equal(t, test.isEqual, equal)
+			j1, _ := Unmarshal(test.b1)
+			j2, _ := Unmarshal(test.b2)
+			assert.Equal(t, test.isEqual, Equal(j1, j2))
 		})
 
 	}
+}
+
+func TestUnmarshalEmpty(t *testing.T) {
+	b := []byte("")
+	j, err := Unmarshal(b)
+	assert.NotNil(t, err)
+	assert.Empty(t, j)
 }
 
 func BenchmarkEqual(b *testing.B) {
@@ -221,9 +228,9 @@ func BenchmarkEqual(b *testing.B) {
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				equal, err := Equal(test.b1, test.b2)
-				assert.Nil(b, err)
-				assert.Equal(b, test.isEqual, equal)
+				j1, _ := Unmarshal(test.b1)
+				j2, _ := Unmarshal(test.b2)
+				assert.Equal(b, test.isEqual, Equal(j1, j2))
 			}
 		})
 	}
