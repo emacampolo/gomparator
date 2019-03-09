@@ -44,7 +44,7 @@ func main() {
 		},
 		cli.BoolFlag{
 			Name:  "show-diff",
-			Usage: "whether or not it shows differences when comparision fails",
+			Usage: "whether or not it shows differences when comparison fails",
 		},
 		cli.BoolFlag{
 			Name:  "status-code-only",
