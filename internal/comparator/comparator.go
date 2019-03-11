@@ -7,7 +7,6 @@ import (
 	"go.uber.org/ratelimit"
 	"log"
 	"os"
-	"sync"
 )
 
 var logger = log.New(os.Stdout, "[gomparator] ", 2)
@@ -24,22 +23,22 @@ func New(fetcher Fetcher, rateLimiter ratelimit.Limiter) Comparator {
 }
 
 type Comparator struct {
-	Fetcher
-	ratelimit.Limiter
+	f Fetcher
+	l ratelimit.Limiter
 }
 
-func (comp Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string, wg *sync.WaitGroup,
+func (comp *Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string,
 	showDiff bool, statusCodeOnly bool) {
-	defer wg.Done()
 
-	comp.Limiter.Take()
 	for relUrl := range jobs {
-		first, err := comp.Fetch(hosts[0], relUrl, headers)
+		comp.l.Take()
+
+		first, err := comp.f.Fetch(hosts[0], relUrl, headers)
 		if err != nil {
 			logger.Fatalf("host: %s, path: %s, error %v", hosts[0], relUrl, err)
 		}
 
-		second, err := comp.Fetch(hosts[1], relUrl, headers)
+		second, err := comp.f.Fetch(hosts[1], relUrl, headers)
 		if err != nil {
 			logger.Fatalf("host: %s, path: %s, error %v", hosts[1], relUrl, err)
 		}

@@ -76,10 +76,13 @@ func Action(c *cli.Context) {
 	lines := io.ReadFile(file)
 	comp := comparator.New(http.New(), ratelimit.New(c.Int("ratelimit")))
 
-	wg := new(sync.WaitGroup)
+	var wg sync.WaitGroup
 	for w := 0; w < c.Int("workers"); w++ {
 		wg.Add(1)
-		go comp.Compare(hosts, headers, lines, wg, c.Bool("show-diff"), c.Bool("status-code-only"))
+		go func() {
+			defer wg.Done()
+			comp.Compare(hosts, headers, lines, c.Bool("show-diff"), c.Bool("status-code-only"))
+		}()
 	}
 
 	wg.Wait()
