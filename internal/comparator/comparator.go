@@ -27,20 +27,20 @@ type Comparator struct {
 	l ratelimit.Limiter
 }
 
-func (comp *Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string,
-	showDiff bool, statusCodeOnly bool) {
-
+func (comp *Comparator) Compare(hosts []string, headers map[string]string, jobs <-chan string, showDiff bool, statusCodeOnly bool) {
 	for relUrl := range jobs {
 		comp.l.Take()
 
 		first, err := comp.f.Fetch(hosts[0], relUrl, headers)
 		if err != nil {
-			logger.Fatalf("host: %s, path: %s, error %v", hosts[0], relUrl, err)
+			logger.Printf("error %v, host: %s, path: %s", err, hosts[0], relUrl)
+			continue
 		}
 
 		second, err := comp.f.Fetch(hosts[1], relUrl, headers)
 		if err != nil {
-			logger.Fatalf("host: %s, path: %s, error %v", hosts[1], relUrl, err)
+			logger.Printf("error %v, host: %s, path: %s", err, hosts[1], relUrl)
+			continue
 		}
 
 		if first.StatusCode == second.StatusCode && statusCodeOnly {

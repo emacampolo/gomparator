@@ -3,11 +3,26 @@ package http
 import (
 	"github.com/emacampolo/gomparator/internal/platform/io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
+	"time"
 )
 
-var httpClient = &http.Client{}
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConnsPerHost:   300,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	},
+}
 
 type Response struct {
 	URL        *url.URL
