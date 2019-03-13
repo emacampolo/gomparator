@@ -1,16 +1,14 @@
 package main
 
 import (
+	"context"
 	"github.com/emacampolo/gomparator/internal/comparator"
 	"github.com/emacampolo/gomparator/internal/platform/http"
-	"github.com/emacampolo/gomparator/internal/platform/io"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
-	"strings"
-
+	"io"
 	"log"
 	"os"
-	"sync"
 )
 
 func main() {
@@ -50,6 +48,16 @@ func main() {
 			Name:  "status-code-only",
 			Usage: "whether or not it only compares status code ignoring response body",
 		},
+		cli.DurationFlag{
+			Name:  "timeout",
+			Value: http.DefaultTimeout,
+			Usage: "requests timeout",
+		},
+		cli.IntFlag{
+			Name:  "connections",
+			Value: http.DefaultConnections,
+			Usage: "max open idle connections per target host",
+		},
 	}
 
 	app.Action = Action
@@ -60,52 +68,30 @@ func main() {
 	}
 }
 
-func Action(c *cli.Context) {
-	file, err := os.Open(c.String("path"))
+func Action(ctx *cli.Context) {
+	file, err := os.Open(ctx.String("path"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer io.Close(file)
+	defer cl(file)
 
-	hosts := c.StringSlice("host")
+	hosts := ctx.StringSlice("host")
 	if len(hosts) != 2 {
 		log.Fatal("invalid number of hosts provided")
 	}
 
-	headers := parseHeaders(c)
-	lines := io.ReadFile(file)
-	comp := comparator.New(http.New(), ratelimit.New(c.Int("ratelimit")))
+	headers := http.ParseHeaders(ctx.String("headers"))
+	fetcher := http.New(http.Timeout(ctx.Duration("timeout")), http.Connections(ctx.Int("connections")))
 
-	var wg sync.WaitGroup
-	for w := 0; w < c.Int("workers"); w++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			comp.Compare(hosts, headers, lines, c.Bool("show-diff"), c.Bool("status-code-only"))
-		}()
-	}
-
-	wg.Wait()
+	urls := comparator.NewReader(file, hosts)
+	responses := comparator.NewProducer(context.Background(), urls, ctx.Int("workers"), headers,
+		ratelimit.New(ctx.Int("ratelimit")), fetcher)
+	comparator.Compare(responses, ctx.Bool("show-diff"), ctx.Bool("status-code-only"))
 }
 
-func parseHeaders(c *cli.Context) map[string]string {
-	var result map[string]string
-
-	headers := strings.Split(c.String("headers"), ",")
-	result = make(map[string]string, len(headers))
-
-	for _, header := range headers {
-		if header == "" {
-			continue
-		}
-
-		h := strings.Split(header, ":")
-		if len(h) != 2 {
-			log.Fatal("invalid header")
-		}
-
-		result[h[0]] = h[1]
+func cl(c io.Closer) {
+	err := c.Close()
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	return result
 }

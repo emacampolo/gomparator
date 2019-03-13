@@ -1,83 +1,114 @@
 package http
 
 import (
-	"github.com/emacampolo/gomparator/internal/platform/io"
+	"crypto/tls"
+	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"time"
 )
 
-var httpClient = &http.Client{
-	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConnsPerHost:   300,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-	},
-}
+const (
+	// DefaultTimeout is the default amount of time an Attacker waits for a request
+	// before it times out.
+	DefaultTimeout = 30 * time.Second
+	// DefaultConnections is the default amount of max open idle connections per
+	// target host.
+	DefaultConnections = 10000
+)
 
 type Response struct {
-	URL        *url.URL
-	JSON       []byte
+	Body       []byte
 	StatusCode int
 }
 
-func New() Client {
-	return Client{}
+type Client struct {
+	dialer *net.Dialer
+	client http.Client
 }
 
-type Client struct{}
+func New(opts ...func(*Client)) *Client {
+	c := &Client{}
 
-func (c Client) Fetch(host string, relPath string, headers map[string]string) (*Response, error) {
-	url, err := url.Parse(relPath)
+	c.dialer = &net.Dialer{
+		Timeout:   DefaultTimeout,
+		KeepAlive: 30 * time.Second,
+	}
+
+	c.client = http.Client{
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			DialContext:           c.dialer.DialContext,
+			ResponseHeaderTimeout: DefaultTimeout,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			TLSHandshakeTimeout:   10 * time.Second,
+			MaxIdleConnsPerHost:   DefaultConnections,
+		},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
+}
+
+// Connections returns a functional option which sets the number of maximum idle
+// open connections per target host.
+func Connections(n int) func(*Client) {
+	return func(c *Client) {
+		tr := c.client.Transport.(*http.Transport)
+		tr.MaxIdleConnsPerHost = n
+	}
+}
+
+// Timeout returns a functional option which sets the maximum amount of time
+// an Attacker will wait for a request to be responded to.
+func Timeout(d time.Duration) func(*Client) {
+	return func(c *Client) {
+		tr := c.client.Transport.(*http.Transport)
+		tr.ResponseHeaderTimeout = d
+		c.dialer.Timeout = d
+		tr.DialContext = c.dialer.DialContext
+	}
+}
+
+func (c *Client) Fetch(url string, headers map[string]string) (*Response, error) {
+	resp, err := c.get(url, headers)
 	if err != nil {
 		return nil, err
 	}
+	defer cl(resp.Body)
 
-	queryString := url.Query()
-	url.RawQuery = queryString.Encode()
-
-	base, err := url.Parse(host)
-	if err != nil {
-		return nil, err
-	}
-
-	url = base.ResolveReference(url)
-	resp, err := c.get(url.String(), headers)
-	if err != nil {
-		return nil, err
-	}
-	defer io.Close(resp.Body)
-
-	json, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Response{
-		URL:        url,
 		StatusCode: resp.StatusCode,
-		JSON:       json,
+		Body:       body,
 	}, nil
 }
 
-func (c Client) get(url string, headers map[string]string) (*http.Response, error) {
+func (c *Client) get(url string, headers map[string]string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", url, nil)
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
-	resp, err := httpClient.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	return resp, nil
+}
+
+func cl(c io.Closer) {
+	err := c.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-// Equal checks equality between 2 JSON-encoded data.
+// Equal checks equality between 2 Body-encoded data.
 func Equal(vx, vy interface{}) bool {
 	if reflect.TypeOf(vx) != reflect.TypeOf(vy) {
 		return false
@@ -56,7 +56,7 @@ func Equal(vx, vy interface{}) bool {
 	}
 }
 
-// Unmarshal parses the JSON-encoded data into an interface{}
+// Unmarshal parses the Body-encoded data into an interface{}
 func Unmarshal(b []byte) (interface{}, error) {
 	var j interface{}
 
