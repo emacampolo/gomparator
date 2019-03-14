@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
@@ -53,6 +54,11 @@ func main() {
 			Value: http.DefaultTimeout,
 			Usage: "requests timeout",
 		},
+		cli.DurationFlag{
+			Name:  "duration",
+			Value: 0,
+			Usage: "duration of the comparision [0 = forever]",
+		},
 		cli.IntFlag{
 			Name:  "connections",
 			Value: http.DefaultConnections,
@@ -68,25 +74,67 @@ func main() {
 	}
 }
 
-func Action(ctx *cli.Context) {
-	file, err := os.Open(ctx.String("path"))
-	if err != nil {
+type options struct {
+	urls           *os.File
+	hosts          []string
+	headers        string
+	timeout        time.Duration
+	duration       time.Duration
+	connections    int
+	workers        int
+	rateLimit      int
+	showDiff       bool
+	statusCodeOnly bool
+}
+
+func Action(cli *cli.Context) {
+	opts := parseFlags(cli)
+	headers := http.ParseHeaders(opts.headers)
+	fetcher := http.New(
+		http.Timeout(opts.timeout),
+		http.Connections(opts.connections))
+
+	var ctx context.Context
+	var cancel context.CancelFunc
+
+	t := opts.duration
+	if t == 0 {
+		ctx, cancel = context.WithCancel(context.Background())
+	} else {
+		// The request has a timeout, so create a context that is
+		// canceled automatically when the timeout expires.
+		ctx, cancel = context.WithTimeout(context.Background(), t)
+	}
+	defer cancel()
+
+	urls := comparator.NewReader(opts.urls, opts.hosts)
+	responses := comparator.NewProducer(ctx, urls, opts.workers, headers,
+		ratelimit.New(opts.rateLimit), fetcher)
+	comparator.Compare(responses, opts.showDiff, opts.statusCodeOnly)
+}
+
+func parseFlags(cli *cli.Context) *options {
+	opts := &options{}
+	var err error
+
+	if opts.urls, err = os.Open(cli.String("path")); err != nil {
 		log.Fatal(err)
 	}
-	defer cl(file)
+	defer cl(opts.urls)
 
-	hosts := ctx.StringSlice("host")
-	if len(hosts) != 2 {
+	if opts.hosts = cli.StringSlice("host"); len(opts.hosts) != 2 {
 		log.Fatal("invalid number of hosts provided")
 	}
 
-	headers := http.ParseHeaders(ctx.String("headers"))
-	fetcher := http.New(http.Timeout(ctx.Duration("timeout")), http.Connections(ctx.Int("connections")))
-
-	urls := comparator.NewReader(file, hosts)
-	responses := comparator.NewProducer(context.Background(), urls, ctx.Int("workers"), headers,
-		ratelimit.New(ctx.Int("ratelimit")), fetcher)
-	comparator.Compare(responses, ctx.Bool("show-diff"), ctx.Bool("status-code-only"))
+	opts.headers = cli.String("headers")
+	opts.timeout = cli.Duration("timeout")
+	opts.connections = cli.Int("connections")
+	opts.duration = cli.Duration("duration")
+	opts.workers = cli.Int("workers")
+	opts.rateLimit = cli.Int("ratelimit")
+	opts.showDiff = cli.Bool("show-diff")
+	opts.statusCodeOnly = cli.Bool("status-code-only")
+	return opts
 }
 
 func cl(c io.Closer) {

@@ -23,7 +23,8 @@ type Host struct {
 	Error      error
 }
 
-func NewProducer(ctx context.Context, urls <-chan *URLPairResponse, concurrency int, headers map[string]string,
+func NewProducer(
+	ctx context.Context, urls <-chan *URLPairResponse, concurrency int, headers map[string]string,
 	limiter ratelimit.Limiter, fetcher Fetcher) <-chan *HostPairResponse {
 
 	ch := make(chan *HostPairResponse)
@@ -35,7 +36,6 @@ func NewProducer(ctx context.Context, urls <-chan *URLPairResponse, concurrency 
 
 			go func() {
 				defer wg.Done()
-
 				for {
 					select {
 					case <-ctx.Done():
