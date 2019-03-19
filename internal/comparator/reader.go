@@ -3,8 +3,9 @@ package comparator
 import (
 	"bufio"
 	"github.com/emacampolo/gomparator/internal/platform/http"
-	"io"
+	"log"
 	"net/url"
+	"os"
 )
 
 type URLPairResponse struct {
@@ -16,9 +17,14 @@ type URL struct {
 	Error error
 }
 
-func NewReader(urls io.Reader, hosts []string) <-chan *URLPairResponse {
+func NewReader(filePath string, hosts []string) <-chan *URLPairResponse {
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	out := make(chan *URLPairResponse)
-	scanner := bufio.NewScanner(urls)
+	scanner := bufio.NewScanner(file)
 
 	go func() {
 		for scanner.Scan() {
@@ -31,6 +37,10 @@ func NewReader(urls io.Reader, hosts []string) <-chan *URLPairResponse {
 			rightUrl.URL, rightUrl.Error = http.JoinPath(hosts[1], text)
 
 			out <- &URLPairResponse{Left: leftUrl, Right: rightUrl}
+		}
+		err := file.Close()
+		if err != nil {
+			log.Fatal(err)
 		}
 		close(out)
 	}()

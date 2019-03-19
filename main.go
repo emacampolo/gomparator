@@ -6,7 +6,6 @@ import (
 	"github.com/emacampolo/gomparator/internal/platform/http"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
-	"io"
 	"log"
 	"os"
 	"time"
@@ -75,7 +74,7 @@ func main() {
 }
 
 type options struct {
-	urls           *os.File
+	filePath       string
 	hosts          []string
 	headers        string
 	timeout        time.Duration
@@ -107,7 +106,7 @@ func Action(cli *cli.Context) {
 	}
 	defer cancel()
 
-	urls := comparator.NewReader(opts.urls, opts.hosts)
+	urls := comparator.NewReader(opts.filePath, opts.hosts)
 	responses := comparator.NewProducer(ctx, urls, opts.workers, headers,
 		ratelimit.New(opts.rateLimit), fetcher)
 	comparator.Compare(responses, opts.showDiff, opts.statusCodeOnly)
@@ -115,17 +114,12 @@ func Action(cli *cli.Context) {
 
 func parseFlags(cli *cli.Context) *options {
 	opts := &options{}
-	var err error
-
-	if opts.urls, err = os.Open(cli.String("path")); err != nil {
-		log.Fatal(err)
-	}
-	defer cl(opts.urls)
 
 	if opts.hosts = cli.StringSlice("host"); len(opts.hosts) != 2 {
 		log.Fatal("invalid number of hosts provided")
 	}
 
+	opts.filePath = cli.String("path")
 	opts.headers = cli.String("headers")
 	opts.timeout = cli.Duration("timeout")
 	opts.connections = cli.Int("connections")
@@ -135,11 +129,4 @@ func parseFlags(cli *cli.Context) *options {
 	opts.showDiff = cli.Bool("show-diff")
 	opts.statusCodeOnly = cli.Bool("status-code-only")
 	return opts
-}
-
-func cl(c io.Closer) {
-	err := c.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
 }
