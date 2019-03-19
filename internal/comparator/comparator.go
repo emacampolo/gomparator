@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-var logger = log.New(os.Stdout, "[gomparator] ", 2)
+var logger = log.New(os.Stdout, "[gomparator] ", log.Ltime)
 
 func Compare(hosts <-chan *HostPairResponse, showDiff bool, statusCodeOnly bool) {
 	for h := range hosts {

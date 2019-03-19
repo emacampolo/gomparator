@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -17,6 +19,10 @@ const (
 	// DefaultConnections is the default amount of max open idle connections per
 	// target host.
 	DefaultConnections = 10000
+	// Default retry configuration
+	defaultRetryWaitMin = 1 * time.Second
+	defaultRetryWaitMax = 15 * time.Second
+	defaultRetryMax     = 3
 )
 
 type Response struct {
@@ -26,7 +32,7 @@ type Response struct {
 
 type Client struct {
 	dialer *net.Dialer
-	client http.Client
+	client *retryablehttp.Client
 }
 
 func New(opts ...func(*Client)) *Client {
@@ -37,15 +43,22 @@ func New(opts ...func(*Client)) *Client {
 		KeepAlive: 30 * time.Second,
 	}
 
-	c.client = http.Client{
-		Transport: &http.Transport{
-			Proxy:                 http.ProxyFromEnvironment,
-			DialContext:           c.dialer.DialContext,
-			ResponseHeaderTimeout: DefaultTimeout,
-			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-			TLSHandshakeTimeout:   10 * time.Second,
-			MaxIdleConnsPerHost:   DefaultConnections,
+	c.client = &retryablehttp.Client{
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				Proxy:                 http.ProxyFromEnvironment,
+				DialContext:           c.dialer.DialContext,
+				ResponseHeaderTimeout: DefaultTimeout,
+				TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+				TLSHandshakeTimeout:   10 * time.Second,
+				MaxIdleConnsPerHost:   DefaultConnections,
+			},
 		},
+		RetryWaitMin: defaultRetryWaitMin,
+		RetryWaitMax: defaultRetryWaitMax,
+		RetryMax:     defaultRetryMax,
+		CheckRetry:   retryablehttp.DefaultRetryPolicy,
+		Backoff:      retryablehttp.DefaultBackoff,
 	}
 
 	for _, opt := range opts {
@@ -59,7 +72,7 @@ func New(opts ...func(*Client)) *Client {
 // open connections per target host.
 func Connections(n int) func(*Client) {
 	return func(c *Client) {
-		tr := c.client.Transport.(*http.Transport)
+		tr := c.client.HTTPClient.Transport.(*http.Transport)
 		tr.MaxIdleConnsPerHost = n
 	}
 }
@@ -68,7 +81,7 @@ func Connections(n int) func(*Client) {
 // an Attacker will wait for a request to be responded to.
 func Timeout(d time.Duration) func(*Client) {
 	return func(c *Client) {
-		tr := c.client.Transport.(*http.Transport)
+		tr := c.client.HTTPClient.Transport.(*http.Transport)
 		tr.ResponseHeaderTimeout = d
 		c.dialer.Timeout = d
 		tr.DialContext = c.dialer.DialContext
@@ -94,10 +107,12 @@ func (c *Client) Fetch(url string, headers map[string]string) (*Response, error)
 }
 
 func (c *Client) get(url string, headers map[string]string) (*http.Response, error) {
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := retryablehttp.NewRequest("GET", url, nil)
+
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
+
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
