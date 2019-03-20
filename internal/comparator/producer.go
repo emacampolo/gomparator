@@ -40,7 +40,10 @@ func NewProducer(
 					select {
 					case <-ctx.Done():
 						return
-					case u := <-urls:
+					case u, ok := <-urls:
+						if !ok {
+							return
+						}
 						limiter.Take()
 						ch <- &HostPairResponse{
 							Left:  fetch(u.Left, fetcher, headers),
