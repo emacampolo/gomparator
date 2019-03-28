@@ -45,10 +45,7 @@ func NewProducer(
 							return
 						}
 						limiter.Take()
-						ch <- &HostPairResponse{
-							Left:  fetch(u.Left, fetcher, headers),
-							Right: fetch(u.Right, fetcher, headers),
-						}
+						ch <- produce(u, fetcher, headers)
 					}
 				}
 			}()
@@ -59,6 +56,26 @@ func NewProducer(
 	}()
 
 	return ch
+}
+
+func produce(u *URLPairResponse, fetcher Fetcher, headers map[string]string) *HostPairResponse {
+	response := &HostPairResponse{}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func(r *HostPairResponse) {
+		defer wg.Done()
+		r.Left = fetch(u.Left, fetcher, headers)
+	}(response)
+
+	go func(r *HostPairResponse) {
+		defer wg.Done()
+		r.Right = fetch(u.Right, fetcher, headers)
+	}(response)
+
+	wg.Wait()
+	return response
 }
 
 func fetch(u *URL, fetcher Fetcher, headers map[string]string) *Host {
