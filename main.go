@@ -1,21 +1,36 @@
 package main
 
 import (
+	"bufio"
 	"context"
-	"github.com/emacampolo/gomparator/internal/comparator"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/emacampolo/gomparator/internal/pipeline"
 	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/stages"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
-	"log"
+	"io"
+	"io/ioutil"
 	"os"
 	"time"
 )
+
+func init() {
+	log.SetFormatter(&log.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		DisableColors:   true,
+		FullTimestamp:   true,
+	})
+
+	log.SetOutput(os.Stdout)
+}
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.HideVersion = true
+	app.Version = "1.1"
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -41,10 +56,6 @@ func main() {
 			Usage: "number of workers running concurrently",
 		},
 		cli.BoolFlag{
-			Name:  "show-diff",
-			Usage: "whether or not it shows differences when comparison fails",
-		},
-		cli.BoolFlag{
 			Name:  "status-code-only",
 			Usage: "whether or not it only compares status code ignoring response body",
 		},
@@ -66,11 +77,7 @@ func main() {
 	}
 
 	app.Action = Action
-
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
+	_ = app.Run(os.Args)
 }
 
 type options struct {
@@ -82,7 +89,6 @@ type options struct {
 	connections    int
 	workers        int
 	rateLimit      int
-	showDiff       bool
 	statusCodeOnly bool
 }
 
@@ -93,9 +99,43 @@ func Action(cli *cli.Context) {
 		http.Timeout(opts.timeout),
 		http.Connections(opts.connections))
 
+	ctx, cancel := createContext(opts)
+	defer cancel()
+
+	file := openFile(opts)
+	defer cl(file)
+
+	logFile := createTmpFile()
+	defer cl(logFile)
+
+	log.Printf("created log temp file in %s", logFile.Name())
+	log.SetOutput(logFile)
+
+	lines := getTotalLines(file)
+	// Once we count the number of lines that will be used as total for the progress bar we reset
+	// the pointer to the beginning of the file since it is much faster than closing and reopening
+	_, err := file.Seek(io.SeekStart, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bar := stages.NewProgressBar(lines)
+	bar.Start()
+
+	reader := stages.NewReader(file, opts.hosts)
+	producer := stages.NewProducer(opts.workers, headers,
+		ratelimit.New(opts.rateLimit), fetcher)
+	comparator := stages.NewConsumer(opts.statusCodeOnly, bar, log.StandardLogger())
+	p := pipeline.New(reader, producer, ctx, comparator)
+
+	p.Run()
+	bar.Stop()
+	_ = file.Sync()
+}
+
+func createContext(opts *options) (context.Context, context.CancelFunc) {
 	var ctx context.Context
 	var cancel context.CancelFunc
-
 	t := opts.duration
 	if t == 0 {
 		ctx, cancel = context.WithCancel(context.Background())
@@ -104,12 +144,39 @@ func Action(cli *cli.Context) {
 		// canceled automatically when the timeout expires.
 		ctx, cancel = context.WithTimeout(context.Background(), t)
 	}
-	defer cancel()
+	return ctx, cancel
+}
 
-	urls := comparator.NewReader(opts.filePath, opts.hosts)
-	responses := comparator.NewProducer(ctx, urls, opts.workers, headers,
-		ratelimit.New(opts.rateLimit), fetcher)
-	comparator.Compare(responses, opts.showDiff, opts.statusCodeOnly)
+func openFile(opts *options) *os.File {
+	file, err := os.Open(opts.filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return file
+}
+
+func createTmpFile() *os.File {
+	now := time.Now()
+	logFile, err := ioutil.TempFile("", fmt.Sprintf("gomparator.%s.*.txt", now.Format("20060102")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return logFile
+}
+
+func getTotalLines(reader io.Reader) int {
+	scanner := bufio.NewScanner(reader)
+
+	// Set the split function for the scanning operation.
+	scanner.Split(bufio.ScanLines)
+
+	// Count the lines.
+	count := 0
+	for scanner.Scan() {
+		count++
+	}
+
+	return count
 }
 
 func parseFlags(cli *cli.Context) *options {
@@ -126,7 +193,13 @@ func parseFlags(cli *cli.Context) *options {
 	opts.duration = cli.Duration("duration")
 	opts.workers = cli.Int("workers")
 	opts.rateLimit = cli.Int("ratelimit")
-	opts.showDiff = cli.Bool("show-diff")
 	opts.statusCodeOnly = cli.Bool("status-code-only")
 	return opts
+}
+
+func cl(c io.Closer) {
+	err := c.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

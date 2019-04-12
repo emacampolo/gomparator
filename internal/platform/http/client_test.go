@@ -1,11 +1,11 @@
 package http
 
 import (
-	"bytes"
 	"context"
+	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 )
@@ -23,10 +23,8 @@ func TestTimeout(t *testing.T) {
 		return false, nil
 	}
 	_, err := c.Fetch(server.URL, nil)
-	want := "net/http: timeout awaiting response headers"
-	if got := err.Error(); !strings.HasSuffix(got, want) {
-		t.Fatalf("want: '%v' in '%v'", want, got)
-	}
+
+	assert.EqualError(t, err, fmt.Sprintf("Get %s: net/http: timeout awaiting response headers", server.URL))
 }
 
 func TestRetries(t *testing.T) {
@@ -45,17 +43,13 @@ func TestRetries(t *testing.T) {
 	defer server.Close()
 	c := New(Timeout(10 * time.Millisecond))
 	res, _ := c.Fetch(server.URL, nil)
-	if got, want := res.StatusCode, 200; got != want {
-		t.Fatalf("got: %v, want: %v", got, want)
-	}
+	assert.Equal(t, 200, res.StatusCode)
 }
 
 func TestRetryTimeout(t *testing.T) {
 	t.Parallel()
-	var got int
 	server := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			got++
 			<-time.After(50 * time.Millisecond)
 		}),
 	)
@@ -63,24 +57,15 @@ func TestRetryTimeout(t *testing.T) {
 	c := New(Timeout(10 * time.Millisecond))
 	_, err := c.Fetch(server.URL, nil)
 
-	if want := 4; got != want {
-		t.Fatalf("got: %v, want: %v", got, want)
-	}
-
-	want := "giving up after 4 attempts"
-	if got := err.Error(); !strings.HasSuffix(got, want) {
-		t.Fatalf("want: '%v' in '%v'", want, got)
-	}
-
+	assert.EqualError(t, err, fmt.Sprintf("GET %s giving up after 4 attempts", server.URL))
 }
 
 func TestConnections(t *testing.T) {
 	t.Parallel()
 	c := New(Connections(23))
 	got := c.client.HTTPClient.Transport.(*http.Transport).MaxIdleConnsPerHost
-	if want := 23; got != want {
-		t.Fatalf("got: %v, want: %v", got, want)
-	}
+
+	assert.Equal(t, 23, got)
 }
 
 func TestResponseBodyCapture(t *testing.T) {
@@ -95,9 +80,8 @@ func TestResponseBodyCapture(t *testing.T) {
 
 	c := New()
 	res, _ := c.Fetch(server.URL, nil)
-	if got := res.Body; !bytes.Equal(got, want) {
-		t.Fatalf("got: %v, want: %v", got, want)
-	}
+
+	assert.Equal(t, want, res.Body)
 }
 
 func TestStatusCode(t *testing.T) {
@@ -110,7 +94,6 @@ func TestStatusCode(t *testing.T) {
 	defer server.Close()
 	c := New()
 	res, _ := c.Fetch(server.URL, nil)
-	if got, want := res.StatusCode, 400; got != want {
-		t.Fatalf("got: %v, want: %v", got, want)
-	}
+
+	assert.Equal(t, 400, res.StatusCode)
 }

@@ -1,7 +1,7 @@
 ### Tools
-GOTOOLS_CHECK = golangci-lint
+GOTOOLS_CHECK = dep gin golangci-lint
 
-all: check_tools test fmt linter
+all: check_tools fmt ensure-deps test linter
 
 ### Tools & dependencies
 
@@ -13,22 +13,29 @@ check_tools:
 ### Testing
 
 test:
-	go test ./...
+	go test ./... -covermode=atomic -coverpkg=./... -count=1 -race
 
 test-cover:
-	go test ./... -covermode=atomic -coverprofile=/tmp/coverage.out
+	go test ./... -covermode=atomic -coverprofile=/tmp/coverage.out -coverpkg=./... -count=1
 	go tool cover -html=/tmp/coverage.out
 
-### Formatting, linting, and vetting
+### Formatting, linting, and deps
 
 fmt:
 	go fmt ./...
 
-metalinter:
+linter:
 	@echo "==> Running linter"
 	golangci-lint run ./...
+
+ensure-deps:
+	@echo "==> Running dep ensure"
+	dep ensure
+
+run:
+	gin --port 8080 run main.go
 
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: check_tools test test-cover fmt linter
+.PHONY: check_tools test test-cover fmt linter ensure-deps run 
