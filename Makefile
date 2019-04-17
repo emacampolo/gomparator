@@ -32,10 +32,7 @@ ensure-deps:
 	@echo "==> Running dep ensure"
 	dep ensure
 
-run:
-	gin --port 8080 run main.go
-
 # To avoid unintended conflicts with file names, always add to .PHONY
 # unless there is a reason not to.
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: check_tools test test-cover fmt linter ensure-deps run 
+.PHONY: check_tools test test-cover fmt linter ensure-deps
