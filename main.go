@@ -130,7 +130,6 @@ func Action(cli *cli.Context) {
 
 	p.Run()
 	bar.Stop()
-	_ = file.Sync()
 }
 
 func createContext(opts *options) (context.Context, context.CancelFunc) {
