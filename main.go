@@ -114,7 +114,7 @@ func Action(cli *cli.Context) {
 	lines := getTotalLines(file)
 	// Once we count the number of lines that will be used as total for the progress bar we reset
 	// the pointer to the beginning of the file since it is much faster than closing and reopening
-	_, err := file.Seek(io.SeekStart, 0)
+	_, err := file.Seek(0, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
