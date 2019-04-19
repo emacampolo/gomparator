@@ -21,6 +21,7 @@ Note: Only supports HTTP GET methods. More verbs are yet to come.
 ```sh
 $ gomparator -path "/path/to/file/with/urls" -host "http://host1.com" -host "http://host2.com" -headers "X-Auth-Token: abc"
 ```
+![](example.gif)
 
 By Default it will use 1 worker and the rate limit will be 5 req/s. This can be overridden. For more info run:
 
