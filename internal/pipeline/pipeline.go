@@ -2,7 +2,7 @@ package pipeline
 
 import (
 	"context"
-	"github.com/emacampolo/gomparator/internal/stages"
+	"github.com/ecampolo/gomparator/internal/stages"
 )
 
 type Reader interface {

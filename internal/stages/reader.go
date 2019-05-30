@@ -2,7 +2,7 @@ package stages
 
 import (
 	"bufio"
-	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/ecampolo/gomparator/internal/platform/http"
 	"io"
 	"net/url"
 )

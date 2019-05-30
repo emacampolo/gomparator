@@ -1,7 +1,7 @@
 package stages
 
 import (
-	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/ecampolo/gomparator/internal/platform/http"
 	"go.uber.org/ratelimit"
 	"net/url"
 	"sync"

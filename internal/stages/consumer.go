@@ -2,7 +2,7 @@ package stages
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/emacampolo/gomparator/internal/platform/json"
+	"github.com/ecampolo/gomparator/internal/platform/json"
 )
 
 type Consumer struct {

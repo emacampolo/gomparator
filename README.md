@@ -6,7 +6,7 @@ Note: Only supports HTTP GET methods. More verbs are yet to come.
 
 ## Download and install
 
-    go get -u github.com/emacampolo/gomparator
+    go get -u github.com/ecampolo/gomparator
 
 ## Create a file with relative URL 
 
