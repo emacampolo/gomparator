@@ -27,14 +27,16 @@ func (r *Reader) Read() <-chan *URLPair {
 	go func() {
 		defer close(stream)
 
+		leftHost := r.hosts[0]
+		rightHost := r.hosts[1]
 		scanner := bufio.NewScanner(r.reader)
 		for scanner.Scan() {
 			text := scanner.Text()
 			leftUrl := &URL{}
-			leftUrl.URL, leftUrl.Error = http.JoinPath(r.hosts[0], text)
+			leftUrl.URL, leftUrl.Error = http.JoinPath(leftHost, text)
 
 			rightUrl := &URL{}
-			rightUrl.URL, rightUrl.Error = http.JoinPath(r.hosts[1], text)
+			rightUrl.URL, rightUrl.Error = http.JoinPath(rightHost, text)
 
 			stream <- &URLPair{RelURL: text, Left: leftUrl, Right: rightUrl}
 		}

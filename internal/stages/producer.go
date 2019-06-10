@@ -22,7 +22,7 @@ func (h *HostsPair) EqualStatusCode() bool {
 }
 
 func (h *HostsPair) HasErrors() bool {
-	return len(h.Errors) > 1
+	return len(h.Errors) >= 1
 }
 
 type Host struct {
