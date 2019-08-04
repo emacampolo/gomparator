@@ -4,16 +4,17 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/ecampolo/gomparator/internal/pipeline"
 	"github.com/ecampolo/gomparator/internal/platform/http"
 	"github.com/ecampolo/gomparator/internal/stages"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
-	"io"
-	"io/ioutil"
-	"os"
-	"time"
 )
 
 func init() {
@@ -69,11 +70,6 @@ func main() {
 			Value: 0,
 			Usage: "duration of the comparision [0 = forever]",
 		},
-		cli.IntFlag{
-			Name:  "connections",
-			Value: http.DefaultConnections,
-			Usage: "max open idle connections per target host",
-		},
 	}
 
 	app.Action = Action
@@ -95,9 +91,7 @@ type options struct {
 func Action(cli *cli.Context) {
 	opts := parseFlags(cli)
 	headers := http.ParseHeaders(opts.headers)
-	fetcher := http.New(
-		http.Timeout(opts.timeout),
-		http.Connections(opts.connections))
+	fetcher := http.New(http.Timeout(opts.timeout))
 
 	ctx, cancel := createContext(opts)
 	defer cancel()

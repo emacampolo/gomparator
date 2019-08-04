@@ -1,10 +1,11 @@
 package stages
 
 import (
-	"github.com/ecampolo/gomparator/internal/platform/http"
-	"go.uber.org/ratelimit"
 	"net/url"
 	"sync"
+
+	"github.com/ecampolo/gomparator/internal/platform/http"
+	"go.uber.org/ratelimit"
 )
 
 type Fetcher interface {
@@ -14,22 +15,22 @@ type Fetcher interface {
 type HostsPair struct {
 	RelURL      string
 	Errors      []error
-	Left, Right *Host
+	Left, Right Host
 }
 
-func (h *HostsPair) EqualStatusCode() bool {
+func (h HostsPair) EqualStatusCode() bool {
 	return h.Left.StatusCode == h.Right.StatusCode
 }
 
-func (h *HostsPair) HasErrors() bool {
-	return len(h.Errors) > 0 
+func (h HostsPair) HasErrors() bool {
+	return len(h.Errors) > 0
 }
 
 type Host struct {
 	StatusCode int
 	Body       []byte
 	URL        *url.URL
-	error      error
+	Error      error
 }
 
 type Producer struct {
@@ -39,8 +40,8 @@ type Producer struct {
 	fetcher     Fetcher
 }
 
-func (p *Producer) Produce(in <-chan *URLPair) <-chan *HostsPair {
-	stream := make(chan *HostsPair)
+func (p *Producer) Produce(in <-chan URLPair) <-chan HostsPair {
+	stream := make(chan HostsPair)
 	go func() {
 		defer close(stream)
 
@@ -71,9 +72,9 @@ func NewProducer(concurrency int, headers map[string]string, limiter ratelimit.L
 	}
 }
 
-func (p *Producer) produce(u *URLPair) *HostsPair {
-	work := func(u *URL) <-chan *Host {
-		ch := make(chan *Host, 1)
+func (p *Producer) produce(u URLPair) HostsPair {
+	work := func(u URL) <-chan Host {
+		ch := make(chan Host, 1)
 		go func() {
 			defer close(ch)
 			ch <- p.fetch(u)
@@ -87,34 +88,39 @@ func (p *Producer) produce(u *URLPair) *HostsPair {
 	lHost := <-leftCh
 	rHost := <-rightCh
 
-	response := &HostsPair{
+	response := HostsPair{
 		RelURL: u.RelURL,
 		Left:   lHost,
 		Right:  rHost,
 	}
 
-	if lHost.error != nil {
-		response.Errors = append(response.Errors, lHost.error)
+	if lHost.Error != nil {
+		response.Errors = append(response.Errors, lHost.Error)
 	}
 
-	if rHost.error != nil {
-		response.Errors = append(response.Errors, rHost.error)
+	if rHost.Error != nil {
+		response.Errors = append(response.Errors, rHost.Error)
 	}
 
 	return response
 }
 
-func (p *Producer) fetch(u *URL) *Host {
-	host := &Host{}
+func (p *Producer) fetch(u URL) Host {
+	host := Host{}
 
 	if u.Error != nil {
-		host.error = u.Error
-	} else if response, err := p.fetcher.Fetch(u.URL.String(), p.headers); err == nil {
-		host.URL = u.URL
-		host.Body = response.Body
-		host.StatusCode = response.StatusCode
-	} else {
-		host.error = err
+		host.Error = u.Error
+		return host
 	}
+
+	response, err := p.fetcher.Fetch(u.URL.String(), p.headers)
+	if err != nil {
+		host.Error = err
+		return host
+	}
+
+	host.URL = u.URL
+	host.Body = response.Body
+	host.StatusCode = response.StatusCode
 	return host
 }

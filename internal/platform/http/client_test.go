@@ -3,11 +3,12 @@ package http
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTimeout(t *testing.T) {
@@ -57,15 +58,7 @@ func TestRetryTimeout(t *testing.T) {
 	c := New(Timeout(10 * time.Millisecond))
 	_, err := c.Fetch(server.URL, nil)
 
-	assert.EqualError(t, err, fmt.Sprintf("GET %s giving up after 4 attempts", server.URL))
-}
-
-func TestConnections(t *testing.T) {
-	t.Parallel()
-	c := New(Connections(23))
-	got := c.client.HTTPClient.Transport.(*http.Transport).MaxIdleConnsPerHost
-
-	assert.Equal(t, 23, got)
+	assert.EqualError(t, err, fmt.Sprintf("GET %s giving up after 5 attempts", server.URL))
 }
 
 func TestResponseBodyCapture(t *testing.T) {

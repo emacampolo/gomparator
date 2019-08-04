@@ -2,14 +2,15 @@ package stages
 
 import (
 	"bufio"
-	"github.com/ecampolo/gomparator/internal/platform/http"
 	"io"
 	"net/url"
+
+	"github.com/ecampolo/gomparator/internal/platform/http"
 )
 
 type URLPair struct {
 	RelURL      string
-	Left, Right *URL
+	Left, Right URL
 }
 
 type URL struct {
@@ -22,8 +23,8 @@ type Reader struct {
 	hosts  []string
 }
 
-func (r *Reader) Read() <-chan *URLPair {
-	stream := make(chan *URLPair)
+func (r *Reader) Read() <-chan URLPair {
+	stream := make(chan URLPair)
 	go func() {
 		defer close(stream)
 
@@ -32,13 +33,13 @@ func (r *Reader) Read() <-chan *URLPair {
 		scanner := bufio.NewScanner(r.reader)
 		for scanner.Scan() {
 			text := scanner.Text()
-			leftUrl := &URL{}
+			leftUrl := URL{}
 			leftUrl.URL, leftUrl.Error = http.JoinPath(leftHost, text)
 
-			rightUrl := &URL{}
+			rightUrl := URL{}
 			rightUrl.URL, rightUrl.Error = http.JoinPath(rightHost, text)
 
-			stream <- &URLPair{RelURL: text, Left: leftUrl, Right: rightUrl}
+			stream <- URLPair{RelURL: text, Left: leftUrl, Right: rightUrl}
 		}
 	}()
 

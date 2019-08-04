@@ -19,7 +19,7 @@ func NewConsumer(statusCodeOnly bool, bar *ProgressBar, log *logrus.Logger) *Con
 	}
 }
 
-func (c *Consumer) Consume(val *HostsPair) {
+func (c *Consumer) Consume(val HostsPair) {
 	if val.HasErrors() {
 		c.bar.IncrementError()
 		for _, v := range val.Errors {
@@ -56,7 +56,7 @@ func (c *Consumer) Consume(val *HostsPair) {
 	}
 }
 
-func unmarshal(h *Host) (interface{}, error) {
+func unmarshal(h Host) (interface{}, error) {
 	j, err := json.Unmarshal(h.Body)
 	if err != nil {
 		return nil, err

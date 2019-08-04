@@ -1,7 +1,6 @@
 package http
 
 import (
-	"crypto/tls"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,18 +11,9 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-const (
-	// DefaultTimeout is the default amount of time an Attacker waits for a request
-	// before it times out.
-	DefaultTimeout = 30 * time.Second
-	// DefaultConnections is the default amount of max open idle connections per
-	// target host.
-	DefaultConnections = 10000
-	// Default retry configuration
-	defaultRetryWaitMin = 1 * time.Second
-	defaultRetryWaitMax = 15 * time.Second
-	defaultRetryMax     = 3
-)
+// DefaultTimeout is the default amount of time an Attacker waits for a request
+// before it times out.
+const DefaultTimeout = 30 * time.Second
 
 type Response struct {
 	Body       []byte
@@ -36,45 +26,21 @@ type Client struct {
 }
 
 func New(opts ...func(*Client)) *Client {
-	c := &Client{}
+	c := Client{}
 
 	c.dialer = &net.Dialer{
 		Timeout:   DefaultTimeout,
-		KeepAlive: 30 * time.Second,
+		KeepAlive: DefaultTimeout,
+		DualStack: true,
 	}
 
-	c.client = &retryablehttp.Client{
-		HTTPClient: &http.Client{
-			Transport: &http.Transport{
-				Proxy:                 http.ProxyFromEnvironment,
-				DialContext:           c.dialer.DialContext,
-				ResponseHeaderTimeout: DefaultTimeout,
-				TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-				TLSHandshakeTimeout:   10 * time.Second,
-				MaxIdleConnsPerHost:   DefaultConnections,
-			},
-		},
-		RetryWaitMin: defaultRetryWaitMin,
-		RetryWaitMax: defaultRetryWaitMax,
-		RetryMax:     defaultRetryMax,
-		CheckRetry:   retryablehttp.DefaultRetryPolicy,
-		Backoff:      retryablehttp.DefaultBackoff,
-	}
-
+	c.client = retryablehttp.NewClient()
+	c.client.Logger = nil
 	for _, opt := range opts {
-		opt(c)
+		opt(&c)
 	}
 
-	return c
-}
-
-// Connections returns a functional option which sets the number of maximum idle
-// open connections per target host.
-func Connections(n int) func(*Client) {
-	return func(c *Client) {
-		tr := c.client.HTTPClient.Transport.(*http.Transport)
-		tr.MaxIdleConnsPerHost = n
-	}
+	return &c
 }
 
 // Timeout returns a functional option which sets the maximum amount of time

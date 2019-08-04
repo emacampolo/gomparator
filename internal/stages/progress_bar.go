@@ -1,8 +1,9 @@
 package stages
 
 import (
-	"gopkg.in/cheggaaa/pb.v1"
 	"sync"
+
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 type ProgressBar struct {
