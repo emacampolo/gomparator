@@ -34,24 +34,30 @@ func (c *Consumer) Consume(val HostsPair) {
 	}
 
 	if val.EqualStatusCode() {
-		leftJSON, lErr := unmarshal(val.Left)
-		rightJSON, rErr := unmarshal(val.Right)
-		if lErr != nil || rErr != nil {
+		leftJSON, err := unmarshal(val.Left)
+		if err != nil {
 			c.bar.IncrementError()
-			c.log.Errorf("error occurred when unmarshal %s", val.RelURL)
+			c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
+			return
+		}
+
+		rightJSON, err := unmarshal(val.Right)
+		if err != nil {
+			c.bar.IncrementError()
+			c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
 			return
 		}
 
 		if !json.Equal(leftJSON, rightJSON) {
 			c.bar.IncrementError()
-			c.log.Warnf("json diff url %s", val.RelURL)
+			c.log.Warnf("found json diff: url %s", val.RelURL)
 			return
 		}
 
 		c.bar.IncrementOk()
 	} else {
 		c.bar.IncrementError()
-		c.log.Warnf("status code url %s, %s: %d - %s: %d",
+		c.log.Warnf("found status code diff: url %s, %s: %d - %s: %d",
 			val.RelURL, val.Left.URL.Host, val.Left.StatusCode, val.Right.URL.Host, val.Right.StatusCode)
 	}
 }
