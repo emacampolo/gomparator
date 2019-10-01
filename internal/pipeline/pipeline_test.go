@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ecampolo/gomparator/internal/platform/http"
-	"github.com/ecampolo/gomparator/internal/stages"
+	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/stages"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/ecampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/platform/http"
 	"go.uber.org/ratelimit"
 )
 

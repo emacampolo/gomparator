@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/ecampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/platform/http"
 )
 
 type URLPair struct {

@@ -9,10 +9,10 @@ import (
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/ecampolo/gomparator/internal/pipeline"
-	"github.com/ecampolo/gomparator/internal/platform/http"
-	"github.com/ecampolo/gomparator/internal/stages"
+	"github.com/emacampolo/gomparator/internal/pipeline"
+	"github.com/emacampolo/gomparator/internal/platform/http"
+	"github.com/emacampolo/gomparator/internal/stages"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
 )
@@ -31,7 +31,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.1"
+	app.Version = "1.2"
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
