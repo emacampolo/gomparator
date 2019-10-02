@@ -1,4 +1,4 @@
-package pipeline
+package main
 
 import (
 	"context"
@@ -7,15 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emacampolo/gomparator/internal/platform/http"
-	"github.com/emacampolo/gomparator/internal/stages"
 	"github.com/stretchr/testify/assert"
 )
 
 type readerStub struct{}
 
-func (*readerStub) Read() <-chan stages.URLPair {
-	stream := make(chan stages.URLPair)
+func (*readerStub) Read() <-chan URLPair {
+	stream := make(chan URLPair)
 	go func() {
 		defer close(stream)
 
@@ -30,15 +28,15 @@ func (*readerStub) Read() <-chan stages.URLPair {
 	return stream
 }
 
-func makeURLPair(leftHost, rightHost string) stages.URLPair {
-	leftUrl := stages.URL{}
-	leftUrl.URL, leftUrl.Error = http.JoinPath(fmt.Sprintf("http://%s.com", leftHost), "")
+func makeURLPair(leftHost, rightHost string) URLPair {
+	leftUrl := URL{}
+	leftUrl.URL, leftUrl.Error = joinPath(fmt.Sprintf("http://%s.com", leftHost), "")
 
-	rightUrl := stages.URL{}
-	rightUrl.URL, rightUrl.Error = http.JoinPath(fmt.Sprintf("http://%s.com", rightHost), "")
+	rightUrl := URL{}
+	rightUrl.URL, rightUrl.Error = joinPath(fmt.Sprintf("http://%s.com", rightHost), "")
 
 	sleepRandom(200)
-	return stages.URLPair{Left: leftUrl, Right: rightUrl}
+	return URLPair{Left: leftUrl, Right: rightUrl}
 }
 
 type producerStub struct {
@@ -46,8 +44,8 @@ type producerStub struct {
 	toBeProcessed int
 }
 
-func (p *producerStub) Produce(in <-chan stages.URLPair) <-chan stages.HostsPair {
-	stream := make(chan stages.HostsPair)
+func (p *producerStub) Produce(in <-chan URLPair) <-chan HostsPair {
+	stream := make(chan HostsPair)
 	go func() {
 		defer close(stream)
 
@@ -57,11 +55,11 @@ func (p *producerStub) Produce(in <-chan stages.URLPair) <-chan stages.HostsPair
 				p.cancel()
 				sleepRandom(200)
 			}
-			response := stages.HostsPair{}
-			response.Left = stages.Host{
+			response := HostsPair{}
+			response.Left = Host{
 				URL: val.Left.URL,
 			}
-			response.Right = stages.Host{
+			response.Right = Host{
 				URL: val.Right.URL,
 			}
 			stream <- response
@@ -74,11 +72,11 @@ func (p *producerStub) Produce(in <-chan stages.URLPair) <-chan stages.HostsPair
 }
 
 type consumerSpy struct {
-	responses []stages.HostsPair
+	responses []HostsPair
 	times     int
 }
 
-func (c *consumerSpy) Consume(val stages.HostsPair) {
+func (c *consumerSpy) Consume(val HostsPair) {
 	c.responses = append(c.responses, val)
 	c.times++
 }

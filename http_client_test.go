@@ -1,4 +1,4 @@
-package http
+package main
 
 import (
 	"context"
@@ -19,13 +19,13 @@ func TestTimeout(t *testing.T) {
 		}),
 	)
 	defer server.Close()
-	c := New(Timeout(10 * time.Millisecond))
-	c.client.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	c := NewHTTPClient(Timeout(10 * time.Millisecond))
+	c.retryableClient.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
 		return false, nil
 	}
 	_, err := c.Fetch(server.URL, nil)
 
-	assert.EqualError(t, err, fmt.Sprintf("Get %s: net/http: timeout awaiting response headers", server.URL))
+	assert.EqualError(t, err, fmt.Sprintf("Get %s: net/http: request canceled (Client.Timeout exceeded while awaiting headers)", server.URL))
 }
 
 func TestRetries(t *testing.T) {
@@ -42,7 +42,7 @@ func TestRetries(t *testing.T) {
 		}),
 	)
 	defer server.Close()
-	c := New(Timeout(10 * time.Millisecond))
+	c := NewHTTPClient(Timeout(10 * time.Millisecond))
 	res, _ := c.Fetch(server.URL, nil)
 	assert.Equal(t, 200, res.StatusCode)
 }
@@ -55,7 +55,7 @@ func TestRetryTimeout(t *testing.T) {
 		}),
 	)
 	defer server.Close()
-	c := New(Timeout(10 * time.Millisecond))
+	c := NewHTTPClient(Timeout(10 * time.Millisecond))
 	_, err := c.Fetch(server.URL, nil)
 
 	assert.EqualError(t, err, fmt.Sprintf("GET %s giving up after 5 attempts", server.URL))
@@ -71,7 +71,7 @@ func TestResponseBodyCapture(t *testing.T) {
 	)
 	defer server.Close()
 
-	c := New()
+	c := NewHTTPClient()
 	res, _ := c.Fetch(server.URL, nil)
 
 	assert.Equal(t, want, res.Body)
@@ -85,7 +85,7 @@ func TestStatusCode(t *testing.T) {
 		}),
 	)
 	defer server.Close()
-	c := New()
+	c := NewHTTPClient()
 	res, _ := c.Fetch(server.URL, nil)
 
 	assert.Equal(t, 400, res.StatusCode)

@@ -1,4 +1,4 @@
-package stages
+package main
 
 import (
 	"sync"

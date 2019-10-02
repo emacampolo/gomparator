@@ -1,15 +1,14 @@
-package stages
+package main
 
 import (
 	"net/url"
 	"sync"
 
-	"github.com/emacampolo/gomparator/internal/platform/http"
 	"go.uber.org/ratelimit"
 )
 
 type Fetcher interface {
-	Fetch(url string, headers map[string]string) (*http.Response, error)
+	Fetch(url string, headers map[string]string) (*Response, error)
 }
 
 type HostsPair struct {
@@ -33,14 +32,14 @@ type Host struct {
 	Error      error
 }
 
-type Producer struct {
+type producer struct {
 	concurrency int
 	headers     map[string]string
 	limiter     ratelimit.Limiter
 	fetcher     Fetcher
 }
 
-func (p *Producer) Produce(in <-chan URLPair) <-chan HostsPair {
+func (p *producer) Produce(in <-chan URLPair) <-chan HostsPair {
 	stream := make(chan HostsPair)
 	go func() {
 		defer close(stream)
@@ -63,8 +62,8 @@ func (p *Producer) Produce(in <-chan URLPair) <-chan HostsPair {
 	return stream
 }
 
-func NewProducer(concurrency int, headers map[string]string, limiter ratelimit.Limiter, fetcher Fetcher) *Producer {
-	return &Producer{
+func NewProducer(concurrency int, headers map[string]string, limiter ratelimit.Limiter, fetcher Fetcher) Producer {
+	return &producer{
 		concurrency: concurrency,
 		headers:     headers,
 		limiter:     limiter,
@@ -72,7 +71,7 @@ func NewProducer(concurrency int, headers map[string]string, limiter ratelimit.L
 	}
 }
 
-func (p *Producer) produce(u URLPair) HostsPair {
+func (p *producer) produce(u URLPair) HostsPair {
 	work := func(u URL) <-chan Host {
 		ch := make(chan Host, 1)
 		go func() {
@@ -105,7 +104,7 @@ func (p *Producer) produce(u URLPair) HostsPair {
 	return response
 }
 
-func (p *Producer) fetch(u URL) Host {
+func (p *producer) fetch(u URL) Host {
 	host := Host{}
 
 	if u.Error != nil {

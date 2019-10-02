@@ -1,21 +1,19 @@
-package pipeline
+package main
 
 import (
 	"context"
-
-	"github.com/emacampolo/gomparator/internal/stages"
 )
 
 type Reader interface {
-	Read() <-chan stages.URLPair
+	Read() <-chan URLPair
 }
 
 type Producer interface {
-	Produce(in <-chan stages.URLPair) <-chan stages.HostsPair
+	Produce(in <-chan URLPair) <-chan HostsPair
 }
 
 type Consumer interface {
-	Consume(in stages.HostsPair)
+	Consume(in HostsPair)
 }
 
 func New(reader Reader, producer Producer, ctx context.Context, consumer Consumer) *Pipeline {
@@ -38,8 +36,8 @@ func (p *Pipeline) Run() {
 	readStream := p.reader.Read()
 	producerStream := p.producer.Produce(readStream)
 
-	orDone := func(ctx context.Context, c <-chan stages.HostsPair) <-chan stages.HostsPair {
-		valStream := make(chan stages.HostsPair)
+	orDone := func(ctx context.Context, c <-chan HostsPair) <-chan HostsPair {
+		valStream := make(chan HostsPair)
 		go func() {
 			defer close(valStream)
 			for {

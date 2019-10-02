@@ -7,11 +7,9 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/emacampolo/gomparator/internal/pipeline"
-	"github.com/emacampolo/gomparator/internal/platform/http"
-	"github.com/emacampolo/gomparator/internal/stages"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"go.uber.org/ratelimit"
@@ -31,7 +29,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.2"
+	app.Version = "1.3"
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -42,9 +40,9 @@ func main() {
 			Name:  "host",
 			Usage: "exactly 2 hosts must be specified. eg: --host 'http://host1.com --host 'http://host2.com'",
 		},
-		cli.StringFlag{
-			Name:  "headers",
-			Usage: `headers separated by commas. eg: "X-Auth-Token: token, X-Public: false"`,
+		cli.StringSliceFlag{
+			Name:  "header, H",
+			Usage: "headers to be used in the http call",
 		},
 		cli.IntFlag{
 			Name:  "ratelimit, r",
@@ -62,7 +60,7 @@ func main() {
 		},
 		cli.DurationFlag{
 			Name:  "timeout",
-			Value: http.DefaultTimeout,
+			Value: DefaultTimeout,
 			Usage: "requests timeout",
 		},
 		cli.DurationFlag{
@@ -79,28 +77,31 @@ func main() {
 type options struct {
 	filePath       string
 	hosts          []string
-	headers        string
+	headers        []string
 	timeout        time.Duration
 	duration       time.Duration
-	connections    int
 	workers        int
 	rateLimit      int
 	statusCodeOnly bool
+	maxBody        int64
 }
 
 func Action(cli *cli.Context) {
 	opts := parseFlags(cli)
-	headers := http.ParseHeaders(opts.headers)
-	fetcher := http.New(http.Timeout(opts.timeout))
+	headers := parseHeaders(opts.headers)
+
+	fetcher := NewHTTPClient(
+		Timeout(opts.timeout),
+		MaxBody(opts.maxBody))
 
 	ctx, cancel := createContext(opts)
 	defer cancel()
 
 	file := openFile(opts)
-	defer cl(file)
+	defer file.Close()
 
 	logFile := createTmpFile()
-	defer cl(logFile)
+	defer logFile.Close()
 
 	log.Printf("created log temp file in %s", logFile.Name())
 	log.SetOutput(logFile)
@@ -113,14 +114,14 @@ func Action(cli *cli.Context) {
 		log.Fatal(err)
 	}
 
-	bar := stages.NewProgressBar(lines)
+	bar := NewProgressBar(lines)
 	bar.Start()
 
-	reader := stages.NewReader(file, opts.hosts)
-	producer := stages.NewProducer(opts.workers, headers,
+	reader := NewReader(file, opts.hosts)
+	producer := NewProducer(opts.workers, headers,
 		ratelimit.New(opts.rateLimit), fetcher)
-	comparator := stages.NewConsumer(opts.statusCodeOnly, bar, log.StandardLogger())
-	p := pipeline.New(reader, producer, ctx, comparator)
+	comparator := NewConsumer(opts.statusCodeOnly, bar, log.StandardLogger())
+	p := New(reader, producer, ctx, comparator)
 
 	p.Run()
 	bar.Stop()
@@ -180,19 +181,35 @@ func parseFlags(cli *cli.Context) *options {
 	}
 
 	opts.filePath = cli.String("path")
-	opts.headers = cli.String("headers")
+	opts.headers = cli.StringSlice("header")
 	opts.timeout = cli.Duration("timeout")
-	opts.connections = cli.Int("connections")
 	opts.duration = cli.Duration("duration")
 	opts.workers = cli.Int("workers")
 	opts.rateLimit = cli.Int("ratelimit")
 	opts.statusCodeOnly = cli.Bool("status-code-only")
+	if opts.statusCodeOnly {
+		opts.maxBody = 0
+	} else {
+		opts.maxBody = DefaultMaxBody
+	}
 	return opts
 }
 
-func cl(c io.Closer) {
-	err := c.Close()
-	if err != nil {
-		log.Fatal(err)
+func parseHeaders(h []string) map[string]string {
+	result := make(map[string]string, len(h))
+
+	for _, header := range h {
+		if header == "" {
+			continue
+		}
+
+		h := strings.Split(header, ":")
+		if len(h) != 2 {
+			log.Fatal("invalid header")
+		}
+
+		result[h[0]] = h[1]
 	}
+
+	return result
 }

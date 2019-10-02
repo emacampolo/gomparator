@@ -1,25 +1,24 @@
-package stages
+package main
 
 import (
-	"github.com/emacampolo/gomparator/internal/platform/json"
 	"github.com/sirupsen/logrus"
 )
 
-type Consumer struct {
+type consumer struct {
 	statusCodeOnly bool
 	bar            *ProgressBar
 	log            *logrus.Logger
 }
 
-func NewConsumer(statusCodeOnly bool, bar *ProgressBar, log *logrus.Logger) *Consumer {
-	return &Consumer{
+func NewConsumer(statusCodeOnly bool, bar *ProgressBar, log *logrus.Logger) Consumer {
+	return &consumer{
 		statusCodeOnly: statusCodeOnly,
 		bar:            bar,
 		log:            log,
 	}
 }
 
-func (c *Consumer) Consume(val HostsPair) {
+func (c *consumer) Consume(val HostsPair) {
 	if val.HasErrors() {
 		c.bar.IncrementError()
 		for _, v := range val.Errors {
@@ -48,7 +47,7 @@ func (c *Consumer) Consume(val HostsPair) {
 			return
 		}
 
-		if !json.Equal(leftJSON, rightJSON) {
+		if !Equal(leftJSON, rightJSON) {
 			c.bar.IncrementError()
 			c.log.Warnf("found json diff: url %s", val.RelURL)
 			return
@@ -63,7 +62,7 @@ func (c *Consumer) Consume(val HostsPair) {
 }
 
 func unmarshal(h Host) (interface{}, error) {
-	j, err := json.Unmarshal(h.Body)
+	j, err := Unmarshal(h.Body)
 	if err != nil {
 		return nil, err
 	}
