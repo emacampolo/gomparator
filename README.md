@@ -19,7 +19,7 @@ Note: Only supports HTTP GET methods. More verbs are yet to come.
 ## Run
 
 ```sh
-$ gomparator -path "/path/to/file/with/urls" -host "http://host1.com" -host "http://host2.com" -headers "X-Auth-Token: abc"
+$ gomparator -path "/path/to/file/with/urls" -host "http://host1.com" -host "http://host2.com" -header "X-Auth-Token: abc"
 ```
 ![](example.gif)
 
