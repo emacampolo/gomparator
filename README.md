@@ -1,8 +1,6 @@
 # gomparator 
 
-gomparator compares HTTP JSON responses from different hosts by checking if they respond with the same json (deep equal ignoring order) and status code.
-
-Note: Only supports HTTP GET methods. More verbs are yet to come.
+gomparator compares HTTP GET JSON responses from different hosts by checking if they respond with the same json (deep equal ignoring order) and status code.
 
 ## Download and install
 
