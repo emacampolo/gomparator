@@ -29,7 +29,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.4"
+	app.Version = "1.5"
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{

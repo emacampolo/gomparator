@@ -58,14 +58,18 @@ func Equal(vx, vy interface{}) bool {
 }
 
 func Remove(i interface{}, path string) {
-	// Split path into tokens which represents nodes in a json
-	tokens := strings.Split(path, ".")
+	if len(path) == 0 {
+		return
+	}
 
-	// Name of the key to be removed. It can represent the parent root of a node or the node child being removed.
-	current := tokens[0]
+	var next string
+	current := path
+	index := strings.IndexRune(path, '.')
 
-	// Child nodes of current if it is a parent root
-	next := strings.Join(tokens[1:], ".")
+	if index >= 0 {
+		current = path[:index]
+		next = path[index+1:]
+	}
 
 	switch t := i.(type) {
 	case map[string]interface{}:
