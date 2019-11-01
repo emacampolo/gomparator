@@ -62,11 +62,12 @@ func Remove(i interface{}, path string) {
 		return
 	}
 
-	var next string
-	current := path
+	var next, current string
 	index := strings.IndexRune(path, '.')
 
-	if index >= 0 {
+	if index == -1 {
+		current = path
+	} else {
 		current = path[:index]
 		next = path[index+1:]
 	}
