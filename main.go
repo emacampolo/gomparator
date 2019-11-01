@@ -29,7 +29,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.3"
+	app.Version = "1.4"
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -68,6 +68,10 @@ func main() {
 			Value: 0,
 			Usage: "duration of the comparision [0 = forever]",
 		},
+		cli.StringFlag{
+			Name:  "exclude",
+			Usage: "excludes a value from json for the specified path. A path is a series of keys separated by a dot",
+		},
 	}
 
 	app.Action = Action
@@ -84,6 +88,7 @@ type options struct {
 	rateLimit      int
 	statusCodeOnly bool
 	maxBody        int64
+	exclude        string
 }
 
 func Action(cli *cli.Context) {
@@ -120,7 +125,7 @@ func Action(cli *cli.Context) {
 	reader := NewReader(file, opts.hosts)
 	producer := NewProducer(opts.workers, headers,
 		ratelimit.New(opts.rateLimit), fetcher)
-	comparator := NewConsumer(opts.statusCodeOnly, bar, log.StandardLogger())
+	comparator := NewConsumer(opts.statusCodeOnly, bar, log.StandardLogger(), opts.exclude)
 	p := New(reader, producer, ctx, comparator)
 
 	p.Run()
@@ -192,6 +197,7 @@ func parseFlags(cli *cli.Context) *options {
 	} else {
 		opts.maxBody = DefaultMaxBody
 	}
+	opts.exclude = cli.String("exclude")
 	return opts
 }
 

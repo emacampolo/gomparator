@@ -236,3 +236,83 @@ func BenchmarkEqual(b *testing.B) {
 		})
 	}
 }
+
+func TestRemove(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		json []byte
+		want []byte
+	}{
+		{
+			name: "removing key from empty object",
+			path: "key",
+			json: []byte(`{}`),
+			want: []byte(`{}`),
+		},
+		{
+			name: "removing key from empty object using empty path",
+			path: "",
+			json: []byte(`{}`),
+			want: []byte(`{}`),
+		},
+		{
+			name: "removing key from empty array",
+			path: "key",
+			json: []byte(`[]`),
+			want: []byte(`[]`),
+		},
+		{
+			name: "removing key from empty array using empty path",
+			path: "",
+			json: []byte(`[]`),
+			want: []byte(`[]`),
+		},
+		{
+			name: "removing key from root",
+			path: "paging",
+			json: []byte(`{"paging":{"total":0,"limit":30,"offset":0},"results":[]}`),
+			want: []byte(`{"results":[]}`),
+		},
+		{
+			name: "removing key from root return empty object",
+			path: "paging",
+			json: []byte(`{"paging":{"total":0,"limit":30,"offset":0}}`),
+			want: []byte(`{}`),
+		},
+		{
+			name: "removing nested key from root",
+			path: "x.s",
+			json: []byte(`{"z": 1, "x": {"s": 2, "t": 1}}`),
+			want: []byte(`{"z": 1, "x": {"t": 1}}`),
+		},
+		{
+			name: "removing two level nested key from root",
+			path: "x.s.k",
+			json: []byte(`{"z": 1, "x": {"s": {"k": 1}, "t": 1}}`),
+			want: []byte(`{"z": 1, "x": {"s": {}, "t": 1}}`),
+		},
+		{
+			name: "removing key from objects inside an array",
+			path: "x.#.s",
+			json: []byte(`{"z": 1, "x": [{"s": {"k": 1, "g": 1}}, {"s": {"k": 2, "g": 2}}, {"s": {"k": 3, "g": 3}}]}`),
+			want: []byte(`{"z": 1, "x": [{},{},{}]}`),
+		},
+		{
+			name: "removing two level nested key from objects inside an array",
+			path: "x.#.s.k",
+			json: []byte(`{"z": 1, "x": [{"s": {"k": 1, "g": 1}}, {"s": {"k": 2, "g": 2}}, {"s": {"k": 3, "g": 3}}]}`),
+			want: []byte(`{"z": 1, "x": [{"s": {"g": 1}}, {"s": {"g": 2}}, {"s": {"g": 3}}]}`),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			j, _ := Unmarshal(tt.json)
+			want, _ := Unmarshal(tt.want)
+			//err := Remove(j, tt.path)
+			Remove(j, tt.path)
+			//assert.NoError(t, err)
+			assert.Equal(t, want, j)
+		})
+	}
+}

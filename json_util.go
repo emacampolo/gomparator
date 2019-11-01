@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 )
 
 // Equal checks equality between 2 Body-encoded data.
@@ -53,6 +54,37 @@ func Equal(vx, vy interface{}) bool {
 		return matches == len(x)
 	default:
 		return vx == vy
+	}
+}
+
+func Remove(i interface{}, path string) {
+	// Split path into tokens which represents nodes in a json
+	tokens := strings.Split(path, ".")
+
+	// Name of the key to be removed. It can represent the parent root of a node or the node child being removed.
+	current := tokens[0]
+
+	// Child nodes of current if it is a parent root
+	next := strings.Join(tokens[1:], ".")
+
+	switch t := i.(type) {
+	case map[string]interface{}:
+		for k, v := range t {
+			if k == current {
+				// If there is no more nodes to traverse we can remove it and terminate the routine
+				if len(next) == 0 {
+					delete(t, current)
+					return
+				}
+				Remove(v, next)
+			}
+		}
+	case []interface{}:
+		if current == "#" {
+			for _, v := range t {
+				Remove(v, next)
+			}
+		}
 	}
 }
 
