@@ -34,11 +34,11 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "path",
-			Usage: "the named file for reading URL. It should contain one column only with a rel path. eg: /v1/cards?query=123",
+			Usage: "specifies the file from which to read targets. It should contain one column only with a rel path. eg: /v1/cards?query=123",
 		},
 		cli.StringSliceFlag{
 			Name:  "host",
-			Usage: "exactly 2 hosts must be specified. eg: --host 'http://host1.com --host 'http://host2.com'",
+			Usage: "targeted hosts. Exactly 2 must be specified. eg: -host 'http://host1.com -host 'http://host2.com'",
 		},
 		cli.StringSliceFlag{
 			Name:  "header, H",
@@ -61,7 +61,7 @@ func main() {
 		cli.DurationFlag{
 			Name:  "timeout",
 			Value: DefaultTimeout,
-			Usage: "requests timeout",
+			Usage: "request timeout",
 		},
 		cli.DurationFlag{
 			Name:  "duration",
@@ -70,7 +70,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "exclude",
-			Usage: "excludes a value from json for the specified path. A path is a series of keys separated by a dot",
+			Usage: "excludes a value from both json for the specified path. A path is a series of keys separated by a dot or #",
 		},
 	}
 
