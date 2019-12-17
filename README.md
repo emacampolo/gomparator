@@ -62,11 +62,7 @@ Excludes a value from both json for the specified path. A [path](#path-syntax) i
 <table>
 <thead><tr><th>path</th><th>output</th></tr></thead>
 <tbody>
-<tr><td>
-
-"name.friends"
-
-</td><td>
+<tr><td>"name.friends"</td><td>
 
 ```json
 {
@@ -75,11 +71,8 @@ Excludes a value from both json for the specified path. A [path](#path-syntax) i
 ```
 
 </td></tr>
-<tr><td>
 
-"friends.#.last"
-
-</td><td>
+<tr><td>"friends.#.last"</td><td>
 
 ```json
 {
