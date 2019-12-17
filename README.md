@@ -56,29 +56,31 @@ Request timeout (default: 30s)
 Duration of the comparision [0 = forever] (default: 0s)
 
 #### `--exclude value`
-Excludes a value from both json for the specified path. A path is a series of keys separated by a dot or #.
+Excludes a value from both json for the specified path. A [path](#path-syntax) is a series of keys separated by a dot or #.
 
-Path syntax
------------
+## Path syntax
+<table>
+<thead><tr><th>path</th><th>output</th></tr></thead>
+<tbody>
+<tr><td>
 
-Given the following json
+"name.friends"
 
-```json
-{
-  "name": {"first": "Tom", "last": "Anderson"},
-  "friends": [
-	{"first": "James", "last": "Murphy"},
-	{"first": "Roger", "last": "Craig"}
-  ]
-}
-```
-`"name.friends"`
+</td><td>
+
 ```json
 {
     "name": {"first": "Tom", "last": "Anderson"},
 }
 ```
-`"friends.#.last"`
+
+</td></tr>
+<tr><td>
+
+"friends.#.last"
+
+</td><td>
+
 ```json
 {
     "name": {"first": "Tom", "last": "Anderson"},
@@ -88,3 +90,6 @@ Given the following json
     ]
 }
 ```
+
+</td></tr>	
+</tbody></table>
