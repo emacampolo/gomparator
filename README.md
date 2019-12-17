@@ -75,19 +75,20 @@ Given the following json input:
 <table>
 <thead><tr><th>path</th><th>output</th></tr></thead>
 <tbody>
-<tr><td>"name.friends"</td><td>
+<tr><td><b>"name.friends"</b></td><td>
 
 ```json
+
 {
     "name": {"first": "Tom", "last": "Anderson"}
 }
+
 ```
-
 </td></tr>
-
-<tr><td>"friends.#.last"</td><td>
+<tr><td><b>"friends.#.last"</b></td><td>
 
 ```json
+
 {
     "name": {"first": "Tom", "last": "Anderson"},
     "friends": [
@@ -95,7 +96,9 @@ Given the following json input:
         {"first": "Roger"}
     ]
 }
+
 ```
 
-</td></tr>	
+</td></tr>
+
 </tbody></table>
