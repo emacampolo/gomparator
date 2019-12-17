@@ -59,6 +59,19 @@ Duration of the comparision [0 = forever] (default: 0s)
 Excludes a value from both json for the specified path. A [path](#path-syntax) is a series of keys separated by a dot or #.
 
 ## Path syntax
+
+Given the following json input:
+
+```json	
+{	
+  "name": {"first": "Tom", "last": "Anderson"},	
+  "friends": [	
+	{"first": "James", "last": "Murphy"},	
+	{"first": "Roger", "last": "Craig"}	
+  ]	
+}	
+```
+
 <table>
 <thead><tr><th>path</th><th>output</th></tr></thead>
 <tbody>
@@ -66,7 +79,7 @@ Excludes a value from both json for the specified path. A [path](#path-syntax) i
 
 ```json
 {
-    "name": {"first": "Tom", "last": "Anderson"},
+    "name": {"first": "Tom", "last": "Anderson"}
 }
 ```
 
