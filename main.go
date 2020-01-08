@@ -11,7 +11,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/ratelimit"
 )
 
@@ -29,53 +29,55 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.5"
+	app.Version = "1.7"
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "path",
 			Usage: "specifies the file from which to read targets. It should contain one column only with a rel path. eg: /v1/cards?query=123",
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "host",
 			Usage: "targeted hosts. Exactly 2 must be specified. eg: -host 'http://host1.com -host 'http://host2.com'",
 		},
-		cli.StringSliceFlag{
+		&cli.StringSliceFlag{
 			Name:  "header, H",
 			Usage: "headers to be used in the http call",
 		},
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:  "ratelimit, r",
 			Value: 5,
 			Usage: "operation rate limit per second",
 		},
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:  "workers, w",
 			Value: 1,
 			Usage: "number of workers running concurrently",
 		},
-		cli.BoolFlag{
+		&cli.BoolFlag{
 			Name:  "status-code-only",
 			Usage: "whether or not it only compares status code ignoring response body",
 		},
-		cli.DurationFlag{
+		&cli.DurationFlag{
 			Name:  "timeout",
 			Value: DefaultTimeout,
 			Usage: "request timeout",
 		},
-		cli.DurationFlag{
+		&cli.DurationFlag{
 			Name:  "duration",
 			Value: 0,
 			Usage: "duration of the comparision [0 = forever]",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:  "exclude",
 			Usage: "excludes a value from both json for the specified path. A path is a series of keys separated by a dot or #",
 		},
 	}
 
 	app.Action = Action
-	_ = app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }
 
 type options struct {
@@ -91,7 +93,7 @@ type options struct {
 	exclude        string
 }
 
-func Action(cli *cli.Context) {
+func Action(cli *cli.Context) error {
 	opts := parseFlags(cli)
 	headers := parseHeaders(opts.headers)
 
@@ -116,7 +118,7 @@ func Action(cli *cli.Context) {
 	// the pointer to the beginning of the file since it is much faster than closing and reopening
 	_, err := file.Seek(0, 0)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	bar := NewProgressBar(lines)
@@ -130,6 +132,7 @@ func Action(cli *cli.Context) {
 
 	p.Run()
 	bar.Stop()
+	return nil
 }
 
 func createContext(opts *options) (context.Context, context.CancelFunc) {
