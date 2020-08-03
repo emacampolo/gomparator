@@ -31,13 +31,13 @@ func (r *reader) Read() <-chan URLPair {
 		scanner := bufio.NewScanner(r.reader)
 		for scanner.Scan() {
 			text := scanner.Text()
-			leftUrl := URL{}
-			leftUrl.URL, leftUrl.Error = joinPath(leftHost, text)
+			leftURL := URL{}
+			leftURL.URL, leftURL.Error = joinPath(leftHost, text)
 
-			rightUrl := URL{}
-			rightUrl.URL, rightUrl.Error = joinPath(rightHost, text)
+			rightURL := URL{}
+			rightURL.URL, rightURL.Error = joinPath(rightHost, text)
 
-			stream <- URLPair{RelURL: text, Left: leftUrl, Right: rightUrl}
+			stream <- URLPair{RelURL: text, Left: leftURL, Right: rightURL}
 		}
 	}()
 

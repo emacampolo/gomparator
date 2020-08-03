@@ -58,7 +58,7 @@ func Equal(vx, vy interface{}) bool {
 }
 
 func Remove(i interface{}, path string) {
-	if len(path) == 0 {
+	if path == "" {
 		return
 	}
 
@@ -77,7 +77,7 @@ func Remove(i interface{}, path string) {
 		for k, v := range t {
 			if k == current {
 				// If there is no more nodes to traverse we can remove it and terminate the routine
-				if len(next) == 0 {
+				if next == "" {
 					delete(t, current)
 					return
 				}
@@ -93,7 +93,7 @@ func Remove(i interface{}, path string) {
 	}
 }
 
-// Unmarshal parses the Body-encoded data into an interface{}
+// Unmarshal parses the Body-encoded data into an interface{}.
 func Unmarshal(b []byte) (interface{}, error) {
 	var j interface{}
 

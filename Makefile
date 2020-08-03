@@ -1,35 +1,42 @@
-### Required tools
-GOTOOLS_CHECK = golangci-lint
+export GO111MODULE ?= on
+PACKAGES = $(shell go list ./...)
+PACKAGES_PATH = $(shell go list -f '{{ .Dir }}' ./...)
 
-all: check_tools fmt ensure-deps linter test
+.PHONY: all
+all: check_tools ensure-deps fmt imports linter test
 
-### Tools & dependencies
+.PHONY: check_tools
 check_tools:
-	@# https://stackoverflow.com/a/25668869
-	@echo "Found tools: $(foreach tool,$(GOTOOLS_CHECK),\
-        $(if $(shell which $(tool)),$(tool),$(error "No $(tool) in PATH")))"
+	@type "golangci-lint" > /dev/null 2>&1 || echo 'Please install golangci-lint: https://golangci-lint.run/usage/install/#local-installation'
 
-### Testing
-test:
-	go test ./... -covermode=atomic -coverpkg=./... -count=1 -race
-
-test-cover:
-	go test ./... -covermode=atomic -coverprofile=coverage.out -coverpkg=./... -count=1
-	go tool cover -html=coverage.out
-
-### Formatting, linting, and deps
-fmt:
-	go fmt ./...
-
-linter:
-	@echo "==> Running linter"
-	golangci-lint run ./...
-
+.PHONY: ensure-deps
 ensure-deps:
-	@echo "==> Running go mod tidy"
-	go mod tidy
+	@echo "=> Syncing dependencies with go mod tidy"
+	@go mod tidy
 
-# To avoid unintended conflicts with file names, always add to .PHONY
-# unless there is a reason not to.
-# https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
-.PHONY: check_tools test test-cover fmt linter ensure-deps
+.PHONY: fmt
+fmt:
+	@echo "=> Executing go fmt"
+	@go fmt $(PACKAGES)
+
+.PHONY: imports
+imports:
+	@echo "=> Executing goimports"
+	@goimports -w $(PACKAGES_PATH)
+
+# Runs golangci-lint with arguments if provided.
+.PHONY: linter
+linter:
+	@echo "=> Executing golangci-lint$(if $(FLAGS), with flags: $(FLAGS))"
+	@golangci-lint run ./... $(FLAGS)
+
+.PHONY: test
+test:
+	@echo "=> Running tests"
+	@go test ./... -covermode=atomic -coverpkg=./... -count=1 -race
+
+.PHONY: test-cover
+test-cover:
+	@echo "=> Running tests and generating report"
+	@go test ./... -covermode=atomic -coverprofile=/tmp/coverage.out -coverpkg=./... -count=1
+	@go tool cover -html=/tmp/coverage.out

@@ -25,7 +25,7 @@ func TestTimeout(t *testing.T) {
 	}
 	_, err := c.Fetch(server.URL, nil)
 
-	assert.EqualError(t, err, fmt.Sprintf("Get %s: net/http: request canceled (Client.Timeout exceeded while awaiting headers)", server.URL))
+	assert.EqualError(t, err, fmt.Sprintf("Get \"%s\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", server.URL))
 }
 
 func TestRetries(t *testing.T) {

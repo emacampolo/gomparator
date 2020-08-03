@@ -15,21 +15,20 @@ import (
 	"go.uber.org/ratelimit"
 )
 
-func init() {
-	log.SetFormatter(&log.TextFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		DisableColors:   true,
-		FullTimestamp:   true,
-	})
+func main() {
+	initLogger()
+	app := newApp()
 
-	log.SetOutput(os.Stdout)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func main() {
+func newApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.7"
+	app.Version = "1.8"
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -41,18 +40,21 @@ func main() {
 			Usage: "targeted hosts. Exactly 2 must be specified. eg: -host 'http://host1.com -host 'http://host2.com'",
 		},
 		&cli.StringSliceFlag{
-			Name:  "header, H",
-			Usage: "headers to be used in the http call",
+			Name:    "header",
+			Aliases: []string{"H"},
+			Usage:   "headers to be used in the http call",
 		},
 		&cli.IntFlag{
-			Name:  "ratelimit, r",
-			Value: 5,
-			Usage: "operation rate limit per second",
+			Name:    "ratelimit",
+			Aliases: []string{"r"},
+			Value:   5,
+			Usage:   "operation rate limit per second",
 		},
 		&cli.IntFlag{
-			Name:  "workers, w",
-			Value: 1,
-			Usage: "number of workers running concurrently",
+			Name:    "workers",
+			Aliases: []string{"w"},
+			Value:   1,
+			Usage:   "number of workers running concurrently",
 		},
 		&cli.BoolFlag{
 			Name:  "status-code-only",
@@ -64,9 +66,10 @@ func main() {
 			Usage: "request timeout",
 		},
 		&cli.DurationFlag{
-			Name:  "duration",
-			Value: 0,
-			Usage: "duration of the comparision [0 = forever]",
+			Name:    "duration",
+			Aliases: []string{"d"},
+			Value:   0,
+			Usage:   "duration of the comparison [0 = forever]",
 		},
 		&cli.StringFlag{
 			Name:  "exclude",
@@ -74,10 +77,18 @@ func main() {
 		},
 	}
 
-	app.Action = Action
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
-	}
+	app.Action = action
+	return app
+}
+
+func initLogger() {
+	log.SetFormatter(&log.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		DisableColors:   true,
+		FullTimestamp:   true,
+	})
+
+	log.SetOutput(os.Stdout)
 }
 
 type options struct {
@@ -93,8 +104,8 @@ type options struct {
 	exclude        string
 }
 
-func Action(cli *cli.Context) error {
-	opts := parseFlags(cli)
+func action(c *cli.Context) error {
+	opts := parseFlags(c)
 	headers := parseHeaders(opts.headers)
 
 	fetcher := NewHTTPClient(
@@ -128,9 +139,9 @@ func Action(cli *cli.Context) error {
 	producer := NewProducer(opts.workers, headers,
 		ratelimit.New(opts.rateLimit), fetcher)
 	comparator := NewConsumer(opts.statusCodeOnly, bar, log.StandardLogger(), opts.exclude)
-	p := New(reader, producer, ctx, comparator)
+	p := New(reader, producer, comparator)
 
-	p.Run()
+	p.Run(ctx)
 	bar.Stop()
 	return nil
 }
@@ -181,26 +192,26 @@ func getTotalLines(reader io.Reader) int {
 	return count
 }
 
-func parseFlags(cli *cli.Context) *options {
+func parseFlags(c *cli.Context) *options {
 	opts := &options{}
 
-	if opts.hosts = cli.StringSlice("host"); len(opts.hosts) != 2 {
+	if opts.hosts = c.StringSlice("host"); len(opts.hosts) != 2 {
 		log.Fatal("invalid number of hosts provided")
 	}
 
-	opts.filePath = cli.String("path")
-	opts.headers = cli.StringSlice("header")
-	opts.timeout = cli.Duration("timeout")
-	opts.duration = cli.Duration("duration")
-	opts.workers = cli.Int("workers")
-	opts.rateLimit = cli.Int("ratelimit")
-	opts.statusCodeOnly = cli.Bool("status-code-only")
+	opts.filePath = c.String("path")
+	opts.headers = c.StringSlice("header")
+	opts.timeout = c.Duration("timeout")
+	opts.duration = c.Duration("duration")
+	opts.workers = c.Int("workers")
+	opts.rateLimit = c.Int("ratelimit")
+	opts.statusCodeOnly = c.Bool("status-code-only")
 	if opts.statusCodeOnly {
 		opts.maxBody = 0
 	} else {
 		opts.maxBody = DefaultMaxBody
 	}
-	opts.exclude = cli.String("exclude")
+	opts.exclude = c.String("exclude")
 	return opts
 }
 

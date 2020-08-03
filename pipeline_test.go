@@ -86,8 +86,8 @@ func TestRun(t *testing.T) {
 	producer := new(producerStub)
 	consumer := new(consumerSpy)
 
-	p := New(reader, producer, context.Background(), consumer)
-	p.Run()
+	p := New(reader, producer, consumer)
+	p.Run(context.Background())
 
 	assert.Equal(t, 6, consumer.times)
 
@@ -119,9 +119,9 @@ func TestRunWithCancel(t *testing.T) {
 	}
 	consumer := new(consumerSpy)
 
-	p := New(reader, producer, ctx, consumer)
+	p := New(reader, producer, consumer)
 
-	p.Run()
+	p.Run(ctx)
 	assert.Equal(t, 3, consumer.times)
 }
 

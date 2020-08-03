@@ -16,12 +16,11 @@ type Consumer interface {
 	Consume(in HostsPair)
 }
 
-func New(reader Reader, producer Producer, ctx context.Context, consumer Consumer) *Pipeline {
+func New(reader Reader, producer Producer, consumer Consumer) *Pipeline {
 	return &Pipeline{
 		reader:   reader,
 		producer: producer,
 		consumer: consumer,
-		ctx:      ctx,
 	}
 }
 
@@ -29,10 +28,9 @@ type Pipeline struct {
 	reader   Reader
 	producer Producer
 	consumer Consumer
-	ctx      context.Context
 }
 
-func (p *Pipeline) Run() {
+func (p *Pipeline) Run(ctx context.Context) {
 	readStream := p.reader.Read()
 	producerStream := p.producer.Produce(readStream)
 
@@ -58,7 +56,7 @@ func (p *Pipeline) Run() {
 		return valStream
 	}
 
-	for val := range orDone(p.ctx, producerStream) {
+	for val := range orDone(ctx, producerStream) {
 		p.consumer.Consume(val)
 	}
 }

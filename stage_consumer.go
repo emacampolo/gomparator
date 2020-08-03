@@ -34,38 +34,39 @@ func (c *consumer) Consume(val HostsPair) {
 		return
 	}
 
-	if val.EqualStatusCode() {
-		leftJSON, err := unmarshal(val.Left.Body)
-		if err != nil {
-			c.bar.IncrementError()
-			c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
-			return
-		}
-
-		rightJSON, err := unmarshal(val.Right.Body)
-		if err != nil {
-			c.bar.IncrementError()
-			c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
-			return
-		}
-
-		if c.exclude != "" {
-			Remove(leftJSON, c.exclude)
-			Remove(rightJSON, c.exclude)
-		}
-
-		if !Equal(leftJSON, rightJSON) {
-			c.bar.IncrementError()
-			c.log.Warnf("found json diff: url %s", val.RelURL)
-			return
-		}
-
-		c.bar.IncrementOk()
-	} else {
+	if !val.EqualStatusCode() {
 		c.bar.IncrementError()
 		c.log.Warnf("found status code diff: url %s, %s: %d - %s: %d",
 			val.RelURL, val.Left.URL.Host, val.Left.StatusCode, val.Right.URL.Host, val.Right.StatusCode)
+		return
 	}
+
+	leftJSON, err := unmarshal(val.Left.Body)
+	if err != nil {
+		c.bar.IncrementError()
+		c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
+		return
+	}
+
+	rightJSON, err := unmarshal(val.Right.Body)
+	if err != nil {
+		c.bar.IncrementError()
+		c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
+		return
+	}
+
+	if c.exclude != "" {
+		Remove(leftJSON, c.exclude)
+		Remove(rightJSON, c.exclude)
+	}
+
+	if !Equal(leftJSON, rightJSON) {
+		c.bar.IncrementError()
+		c.log.Warnf("found json diff: url %s", val.RelURL)
+		return
+	}
+
+	c.bar.IncrementOk()
 }
 
 func unmarshal(b []byte) (interface{}, error) {

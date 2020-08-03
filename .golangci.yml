@@ -1,0 +1,100 @@
+run:
+  tests: false
+  deadline: 5m
+
+linters-settings:
+  whitespace:
+    multi-if: true
+    multi-func: true
+  exhaustive:
+    default-signifies-exhaustive: true
+  gomodguard:
+    list-type: blacklist
+    blocked:
+      modules:
+        - github.com/pkg/errors:
+            reason: "We prefer the standard library `errors` pkg over third party libs"
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - assignOp
+      - hugeParam
+      - ifElseChain
+      - paramTypeCombine
+      - rangeValCopy
+      - unnamedResult
+      - whyNoLint
+      - wrapperFunc
+  golint:
+    min-confidence: 0
+  misspell:
+    locale: US
+
+linters:
+  disable-all: true
+  enable:
+    # List of enabled-by-default linters that we explicitly opt-in.
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - structcheck
+    - varcheck
+    - ineffassign
+    - deadcode
+    - typecheck
+
+    # List of disabled-by-default linters that we explicitly opt-in.
+    - bodyclose
+    - noctx
+    - golint
+    - rowserrcheck
+    - stylecheck
+    - gosec
+    # interfacer
+    - unconvert
+    # dupl
+    # goconst
+    - gocyclo
+    # gocognit
+    - asciicheck
+    - gofmt
+    # gofumpt
+    - goimports
+    # goheader
+    # maligned
+    - depguard
+    - misspell
+    # lll
+    - unparam
+    # dogsled
+    - nakedret
+    # prealloc
+    - scopelint
+    - gocritic
+    - gochecknoinits
+    # gochecknoglobals
+    # godox
+    # funlen
+    - whitespace
+    # wsl
+    - goprintffuncname
+    # gomnd
+    # goerr113
+    - gomodguard
+    - godot
+    # testpackage
+    - nestif
+    # exportloopref
+    - exhaustive
+    - sqlclosecheck
+    - nolintlint
+
+service:
+  golangci-lint-version: 1.28.x
