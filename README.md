@@ -53,7 +53,7 @@ Whether or not it only compares status code ignoring response body
 Request timeout (default: 30s)
 
 #### `--duration value, -d value`
-Duration of the comparision [0 = forever] (default: 0s)
+Duration of the comparison [0 = forever] (default: 0s)
 
 #### `--exclude value`
 Excludes a value from both json for the specified path. A [path](#path-syntax) is a series of keys separated by a dot or #.
