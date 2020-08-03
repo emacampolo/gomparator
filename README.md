@@ -52,7 +52,7 @@ Whether or not it only compares status code ignoring response body
 #### `--timeout value`
 Request timeout (default: 30s)
 
-#### `--duration value`
+#### `--duration value, -d value`
 Duration of the comparision [0 = forever] (default: 0s)
 
 #### `--exclude value`
