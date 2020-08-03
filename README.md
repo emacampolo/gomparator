@@ -1,4 +1,4 @@
-# gomparator 
+# gomparator
 
 gomparator compares HTTP GET JSON responses from different hosts by checking if they respond with the same json (deep equal ignoring order) and status code.
 
@@ -6,22 +6,22 @@ gomparator compares HTTP GET JSON responses from different hosts by checking if 
 
     go get -u github.com/emacampolo/gomparator
 
-## Create a file with relative URL 
+## Create a file with relative URL
 
     eg:
-    
+
     /v1/payment_methods?client.id=1
     /v1/payment_methods?client.id=2
     /v1/payment_methods?client.id=3
-    
+
 ## Run
 
 ```sh
-$ gomparator -path "/path/to/file/with/urls" -host "http://host1.com" -host "http://host2.com" -header "X-Auth-Token: abc"
+$ gomparator -path "/path/to/file/with/urls" --host "http://host1.com" --host "http://host2.com" -H "X-Auth-Token: abc"
 ```
 ![](example.gif)
 
-By Default it will use 1 worker and the rate limit will be 5 req/s
+By Default, it will use 1 worker, and the rate limit will be 5 req/s
 
 ## Options
 
@@ -35,7 +35,7 @@ Print the version
 Specifies the file from which to read targets. It should contain one column only with a rel path. eg: /v1/cards?query=123
 
 #### `--host value`
-Targeted hosts. Exactly 2 must be specified. eg: -host 'http://host1.com -host 'http://host2.com'
+Targeted hosts. Exactly 2 hosts must be specified. eg: --host 'http://host1.com --host 'http://host2.com'
 
 #### `--header value, -H value`
 Headers to be used in the http call
@@ -62,14 +62,14 @@ Excludes a value from both json for the specified path. A [path](#path-syntax) i
 
 Given the following json input:
 
-```json	
-{	
-  "name": {"first": "Tom", "last": "Anderson"},	
-  "friends": [	
-	{"first": "James", "last": "Murphy"},	
-	{"first": "Roger", "last": "Craig"}	
-  ]	
-}	
+```json
+{
+  "name": {"first": "Tom", "last": "Anderson"},
+  "friends": [
+	{"first": "James", "last": "Murphy"},
+	{"first": "Roger", "last": "Craig"}
+  ]
+}
 ```
 
 <table>

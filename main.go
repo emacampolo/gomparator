@@ -28,7 +28,7 @@ func newApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.9.1"
+	app.Version = "1.9.2"
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -37,7 +37,7 @@ func newApp() *cli.App {
 		},
 		&cli.StringSliceFlag{
 			Name:  "host",
-			Usage: "targeted hosts. Exactly 2 must be specified. eg: -host 'http://host1.com -host 'http://host2.com'",
+			Usage: "targeted hosts. Exactly 2 must be specified. eg: --host 'http://host1.com --host 'http://host2.com'",
 		},
 		&cli.StringSliceFlag{
 			Name:    "header",
