@@ -28,7 +28,7 @@ func newApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.8"
+	app.Version = "1.9.1"
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
