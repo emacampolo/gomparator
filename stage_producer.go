@@ -78,6 +78,7 @@ func (p *producer) produce(u URLPair) HostsPair {
 			defer close(ch)
 			ch <- p.fetch(u)
 		}()
+
 		return ch
 	}
 
@@ -109,17 +110,20 @@ func (p *producer) fetch(u URL) Host {
 
 	if u.Error != nil {
 		host.Error = u.Error
+
 		return host
 	}
 
 	response, err := p.fetcher.Fetch(u.URL.String(), p.headers)
 	if err != nil {
 		host.Error = err
+
 		return host
 	}
 
 	host.URL = u.URL
 	host.Body = response.Body
 	host.StatusCode = response.StatusCode
+
 	return host
 }

@@ -68,15 +68,16 @@ linters:
     # gofumpt
     - goimports
     # goheader
+    # gci
     # maligned
-    - depguard
+    # depguard
     - misspell
     # lll
     - unparam
     # dogsled
     - nakedret
     # prealloc
-    - scopelint
+    # scopelint
     - gocritic
     - gochecknoinits
     # gochecknoglobals
@@ -94,7 +95,8 @@ linters:
     # exportloopref
     - exhaustive
     - sqlclosecheck
+    - nlreturn
     - nolintlint
 
 service:
-  golangci-lint-version: 1.28.x
+  golangci-lint-version: 1.30.x

@@ -60,5 +60,6 @@ func makeProgressBar(total int, prefix string) *pb.ProgressBar {
 	bar.SetMaxWidth(120)
 	bar.ShowElapsedTime = true
 	bar.ShowTimeLeft = false
+
 	return bar
 }

@@ -53,6 +53,7 @@ func (p *Pipeline) Run(ctx context.Context) {
 				}
 			}
 		}()
+
 		return valStream
 	}
 

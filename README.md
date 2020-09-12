@@ -17,7 +17,7 @@ gomparator compares HTTP GET JSON responses from different hosts by checking if 
 ## Run
 
 ```sh
-$ gomparator -path "/path/to/file/with/urls" --host "http://host1.com" --host "http://host2.com" -H "X-Auth-Token: abc"
+$ gomparator --path "/path/to/file/with/urls" --host "http://host1.com" --host "http://host2.com" -H "X-Auth-Token: abc"
 ```
 ![](example.gif)
 
@@ -47,7 +47,7 @@ Operation rate limit per second (default: 5)
 Number of workers running concurrently (default: 1)
 
 #### `--status-code-only`
-Whether or not it only compares status code ignoring response body
+Whether it only compares status code ignoring response body
 
 #### `--timeout value`
 Request timeout (default: 30s)

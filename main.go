@@ -28,7 +28,7 @@ func newApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "Gomparator"
 	app.Usage = "Compares API responses by status code and response body"
-	app.Version = "1.9.2"
+	app.Version = "1.9.3"
 
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -78,6 +78,7 @@ func newApp() *cli.App {
 	}
 
 	app.Action = action
+
 	return app
 }
 
@@ -143,6 +144,7 @@ func action(c *cli.Context) error {
 
 	p.Run(ctx)
 	bar.Stop()
+
 	return nil
 }
 
@@ -157,6 +159,7 @@ func createContext(opts *options) (context.Context, context.CancelFunc) {
 		// canceled automatically when the timeout expires.
 		ctx, cancel = context.WithTimeout(context.Background(), t)
 	}
+
 	return ctx, cancel
 }
 
@@ -165,6 +168,7 @@ func openFile(opts *options) *os.File {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return file
 }
 
@@ -174,6 +178,7 @@ func createTmpFile() *os.File {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return logFile
 }
 
@@ -212,6 +217,7 @@ func parseFlags(c *cli.Context) *options {
 		opts.maxBody = DefaultMaxBody
 	}
 	opts.exclude = c.String("exclude")
+
 	return opts
 }
 

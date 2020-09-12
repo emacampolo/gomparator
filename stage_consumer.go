@@ -26,11 +26,13 @@ func (c *consumer) Consume(val HostsPair) {
 		for _, v := range val.Errors {
 			c.log.Errorln(v)
 		}
+
 		return
 	}
 
 	if val.EqualStatusCode() && c.statusCodeOnly {
 		c.bar.IncrementOk()
+
 		return
 	}
 
@@ -38,6 +40,7 @@ func (c *consumer) Consume(val HostsPair) {
 		c.bar.IncrementError()
 		c.log.Warnf("found status code diff: url %s, %s: %d - %s: %d",
 			val.RelURL, val.Left.URL.Host, val.Left.StatusCode, val.Right.URL.Host, val.Right.StatusCode)
+
 		return
 	}
 
@@ -45,6 +48,7 @@ func (c *consumer) Consume(val HostsPair) {
 	if err != nil {
 		c.bar.IncrementError()
 		c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
+
 		return
 	}
 
@@ -52,6 +56,7 @@ func (c *consumer) Consume(val HostsPair) {
 	if err != nil {
 		c.bar.IncrementError()
 		c.log.Errorf("could not unmarshal json: url %s: %v", val.RelURL, err)
+
 		return
 	}
 
@@ -63,6 +68,7 @@ func (c *consumer) Consume(val HostsPair) {
 	if !Equal(leftJSON, rightJSON) {
 		c.bar.IncrementError()
 		c.log.Warnf("found json diff: url %s", val.RelURL)
+
 		return
 	}
 
